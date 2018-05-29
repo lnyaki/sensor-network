@@ -19,3 +19,9 @@ static void unicast_sent(struct unicast_conn *c, int status, int num_tx){
 static void broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
 
 }
+
+static void send_broadcast_message(struct broadcast_conn broadcast broadcast_connection,char * message){
+	packetbuf_copyfrom(message, strlen(message));
+    broadcast_send(&broadcast_connection);
+    printf("broadcast message sent\n");
+}
