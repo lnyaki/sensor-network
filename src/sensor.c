@@ -28,31 +28,40 @@ static struct unicast_conn unicast_connection;
 
 
 /*-------------------------------------------------------------------------*/
+int open_connections(){
+	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
+	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callbacks);
+}
 //Close the broadcast and unicast connections
-int close_connection(&broadcast, &unicast){
+int close_connections(&broadcast, &unicast){
 	broadcast_close(&broadcast)
 	unicast_close(&unicast)
 }
 
 //The function that is executed when an event happens
 int process_event(int ev){
+	//if we received a message
+	if(ev == PROCESS_EVENT_MSG){
 
+    	//This is a mock example (funciton in messageSent.h)
+    	send_unicast_message(&unicast, data)
+	}
 }
 
 //The function that is executed when the timer runs out
 int periodic_processing(){
-	
+	//Defined in messageSent.h.
+    send_broadcast_message(&broadcast, data)
 }
+
 /****************************************************************************
 *                               PROCESS THREAD
-*****************************************************************************/
+ffffffff***********************************************************f*************/
 PROCESS_THREAD(example_broadcast_process, ev, data){
-	PROCESS_EXITHANDLER(close_connection(&broadcast, &unicast_connection);)
+	PROCESS_EXITHANDLER(close_connections(&broadcast, &unicast_connection);)
 	PROCESS_BEGIN();
 
-	//(<connection>, <channel>, <callbacks>)
-	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
-	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callbacks);
+	open_connections()
 
 	//Data to broadcast
 	char * data;
@@ -66,21 +75,14 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
     	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
     	//Check if timer expired
-    	if(etimer_expired(&et)){
+    	if(ev == PROCESS_EVENT_TIMER){
     		periodic_processing();
     	}
 
-    	//Otherwise, an event has happened
+    	//Otherwise, another event event has happened
     	else{
     		process_event(ev);
     	}
-    		
-
-    	//Defined in messageSent.h.
-    	send_broadcast_message(&broadcast, data)
-
-    	//Defined in messageSent.h
-    	send_unicast_message(&unicast, data)
 	}
 
 	PROCESS_END();

@@ -27,3 +27,15 @@ int send_broadcast_message(struct broadcast_conn broadcast broadcast_connection,
 int send_unicast_message(){
 
 }
+
+int sendHelloMessage(){}
+
+int sendDiscoveryMessage(){}
+
+int sendNodeInformationMessage(){}
+
+int sendDataMessage(){}
+
+int sendACK(){
+
+}
