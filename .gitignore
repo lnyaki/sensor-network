@@ -1,0 +1,6 @@
+# Latex stuff 
+rapport/*.log
+rapport/*.pdf
+rapport/*.aux
+rapport/*.toc
+rapport/*.synctex.gz

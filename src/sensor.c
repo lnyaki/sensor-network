@@ -30,7 +30,6 @@ unicast_sent(struct unicast_conn *c, int status, int num_tx)
   printf("unicast message sent to %d.%d: status %d num_tx %d\n",
     dest->u8[0], dest->u8[1], status, num_tx);
 }
-/*---------------------------------------------------------------------------*/
 
 /****************************************************************************
 *                                 BROADCAST
@@ -54,6 +53,7 @@ static struct unicast_conn uc;
 
 static int BROADCAST_CHANNEL 	= 100;
 static int UNICAST_CHANNEL 		= 101;
+
 /****************************************************************************
 *                               PROCESS THREAD
 *****************************************************************************/
