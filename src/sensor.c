@@ -24,7 +24,7 @@ AUTOSTART_PROCESSES(&example_unicast_process);
 static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
 static struct broadcast_conn broadcast;
 static const struct unicast_callbacks unicast_callbacks = {unicast_received, unicast_sent};
-static struct unicast_conn uc;
+static struct unicast_conn unicast_connection;
 
 
 /****************************************************************************
@@ -36,16 +36,22 @@ static int UNICAST_CHANNEL 		= 101;
 
 static int PROCESS_WAIT_TIME	= 5;
 
+/*-------------------------------------------------------------------------*/
+int close_connection(&broadcast, &unicast){
+	broadcast_close(&broadcast)
+	unicast_close(&unicast)
+}
+
 /****************************************************************************
 *                               PROCESS THREAD
 *****************************************************************************/
 PROCESS_THREAD(example_broadcast_process, ev, data){
-	PROCESS_EXITHANDLER(broadcast_close(&broadcast);)
+	PROCESS_EXITHANDLER(close_connection(&broadcast, &unicast_connection);)
 	PROCESS_BEGIN();
 
 	//(<connection>, <channel>, <callbacks>)
 	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
-	unicast_open(&uc, UNICAST_CHANNEL, &unicast_callbacks);
+	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callbacks);
 
 	//Data to broadcast
 	char * data;
