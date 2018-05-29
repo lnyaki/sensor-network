@@ -42,7 +42,6 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
          from->u8[0], from->u8[1], (char *)packetbuf_dataptr());
 }
 
-/*---------------------------------------------------------------------------*/
 /****************************************************************************
 *                                 CALLBACKS
 *****************************************************************************/
@@ -51,8 +50,15 @@ static struct broadcast_conn broadcast;
 static const struct unicast_callbacks unicast_callbacks = {unicast_received, unicast_sent};
 static struct unicast_conn uc;
 
+
+/****************************************************************************
+*                               CONSTANTS
+*****************************************************************************/
+
 static int BROADCAST_CHANNEL 	= 100;
 static int UNICAST_CHANNEL 		= 101;
+
+static int PROCESS_WAIT_TIME	= 5;
 
 /****************************************************************************
 *                               PROCESS THREAD
@@ -66,7 +72,12 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
 	unicast_open(&uc, UNICAST_CHANNEL, &unicast_callbacks);
 
 	while(1){
-
+		static struct etimer et;
+    	linkaddr_t addr;
+    
+    	etimer_set(&et, CLOCK_SECOND * PROCESS_WAIT_TIME);
+    
+    	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 	}
 
 	PROCESS_END();
