@@ -5,7 +5,7 @@
 //Our own includes
 #include "messages/receiveMessage.h"
 #include "messages/sendMessage.h"
-
+#include "sensor.h"
 
 /*---------------------------------------------------------------------------*/
 /*---------------------        Start Process    -----------------------------*/
@@ -27,21 +27,22 @@ static const struct unicast_callbacks unicast_callbacks = {unicast_received, uni
 static struct unicast_conn unicast_connection;
 
 
-/****************************************************************************
-*                               CONSTANTS
-*****************************************************************************/
-
-static int BROADCAST_CHANNEL 	= 100;
-static int UNICAST_CHANNEL 		= 101;
-
-static int PROCESS_WAIT_TIME	= 5;
-
 /*-------------------------------------------------------------------------*/
+//Close the broadcast and unicast connections
 int close_connection(&broadcast, &unicast){
 	broadcast_close(&broadcast)
 	unicast_close(&unicast)
 }
 
+//The function that is executed when an event happens
+int process_event(int ev){
+
+}
+
+//The function that is executed when the timer runs out
+int periodic_processing(){
+	
+}
 /****************************************************************************
 *                               PROCESS THREAD
 *****************************************************************************/
@@ -63,6 +64,17 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
     	etimer_set(&et, CLOCK_SECOND * PROCESS_WAIT_TIME);
     
     	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+
+    	//Check if timer expired
+    	if(etimer_expired(&et)){
+    		periodic_processing();
+    	}
+
+    	//Otherwise, an event has happened
+    	else{
+    		process_event(ev);
+    	}
+    		
 
     	//Defined in messageSent.h.
     	send_broadcast_message(&broadcast, data)
