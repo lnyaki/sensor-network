@@ -3,8 +3,8 @@
 #include <stdio.h>
 
 //Our own includes
-//#include "unicsast/xxx.h"
-//#include "broadcast/xxx.h"
+#include "messages/receiveMessage.h"
+#include "messages/sendMessage.h"
 
 
 /*---------------------------------------------------------------------------*/
@@ -47,6 +47,9 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
 	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
 	unicast_open(&uc, UNICAST_CHANNEL, &unicast_callbacks);
 
+	//Data to broadcast
+	char * data;
+
 	while(1){
 		static struct etimer et;
     	linkaddr_t addr;
@@ -54,6 +57,12 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
     	etimer_set(&et, CLOCK_SECOND * PROCESS_WAIT_TIME);
     
     	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+
+    	//Defined in messageSent.h.
+    	send_broadcast_message(&broadcast, data)
+
+    	//Defined in messageSent.h
+    	send_unicast_message(&unicast, data)
 	}
 
 	PROCESS_END();
