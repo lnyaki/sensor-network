@@ -26,6 +26,8 @@ static struct broadcast_conn broadcast;
 static const struct unicast_callbacks unicast_callbacks = {unicast_received, unicast_sent};
 static struct unicast_conn unicast_connection;
 
+//Waiting time of the process, in seconds
+const int PROCESS_WAIT_TIME = 5;
 
 /*-------------------------------------------------------------------------*/
 int open_connections(){
