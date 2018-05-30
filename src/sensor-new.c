@@ -28,11 +28,13 @@ static struct unicast_conn unicast_connection;
 
 //Waiting time of the process, in seconds
 const int PROCESS_WAIT_TIME = 5;
+const int BROADCAST_CHANNEL = 100;
+const int UNICAST_CHANNEL 	= 101;
 
 /*-------------------------------------------------------------------------*/
 int open_connections(struct broadcast_conn *broadcast, struct unicast_conn *unicast){
 
-	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
+	broadcast_open(*broadcast, BROADCAST_CHANNEL, *broadcast_call);
 	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callback);
 	
 	return 0;
@@ -48,20 +50,20 @@ int close_connections(struct broadcast_conn *broadcast, struct unicast_conn *uni
 }
 
 //The function that is executed when an event happens
-int process_event(int ev){
+int process_event(int ev, char* data){
 	
 	//if we received a message
 	if(ev == PROCESS_EVENT_MSG){
 
     	//This is a mock example (funciton in messageSent.h)
-    	send_unicast_message(&unicast, data);
+    	send_unicast_message(&unicast_connection, data);
 	}
 
 	return 0;
 }
 
 //The function that is executed when the timer runs out
-int periodic_processing(){
+int periodic_processing(char* data){
 	
 	//Defined in messageSent.h.
     send_broadcast_message(&broadcast, data);
