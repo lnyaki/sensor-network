@@ -66,7 +66,7 @@ int process_event(int ev, char* data){
 int periodic_processing(struct broadcast_conn broadcast,char[] data){
 	
 	//Defined in messageSent.h.
-    send_broadcast_message(&broadcast, &data);
+    send_broadcast_message(&broadcast, data);
     
     return 0;
 
@@ -82,7 +82,7 @@ PROCESS_THREAD(sensor_code, ev, data){
 	open_connections(broadcast_connection, unicast_connection);
 
 	//Data to broadcast
-	char* data = "toto";
+	char data[50] = "toto";
 
 	while(1){
 		static struct etimer et;
