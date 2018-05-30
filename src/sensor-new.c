@@ -63,7 +63,7 @@ int process_event(int ev, char* data){
 }
 
 //The function that is executed when the timer runs out
-int periodic_processing(struct broadcast_conn broadcastchar* data){
+int periodic_processing(struct broadcast_conn broadcast,char* data){
 	
 	//Defined in messageSent.h.
     send_broadcast_message(&broadcast, data);
@@ -93,7 +93,7 @@ PROCESS_THREAD(sensor_code, ev, data){
     	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
     	//Check if timer expired
-    	if(ev == PROCESS_EVENT_TIMER){make
+    	if(ev == PROCESS_EVENT_TIMER){
     		periodic_processing(broadcast_connection, data);
     	}
 
