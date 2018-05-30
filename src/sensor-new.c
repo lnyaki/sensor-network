@@ -78,11 +78,11 @@ PROCESS_THREAD(sensor_code, ev, data){
 	open_connections();
 
 	//Data to broadcast
-	char * data;
+	//char * data = null;
 
 	while(1){
 		static struct etimer et;
-    	linkaddr_t addr;
+    	//linkaddr_t addr = null;
     
     	etimer_set(&et, CLOCK_SECOND * PROCESS_WAIT_TIME);
     
