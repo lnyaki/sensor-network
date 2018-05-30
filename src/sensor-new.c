@@ -63,7 +63,7 @@ int process_event(int ev, char* data){
 }
 
 //The function that is executed when the timer runs out
-int periodic_processing(struct broadcast_conn broadcast,char* data){
+int periodic_processing(struct broadcast_conn broadcast,char[] data){
 	
 	//Defined in messageSent.h.
     send_broadcast_message(&broadcast, &data);
@@ -82,7 +82,7 @@ PROCESS_THREAD(sensor_code, ev, data){
 	open_connections(broadcast_connection, unicast_connection);
 
 	//Data to broadcast
-	char * data = "toto";
+	char* data = "toto";
 
 	while(1){
 		static struct etimer et;
