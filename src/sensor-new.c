@@ -40,6 +40,8 @@ int close_connections(struct broadcast_conn &broadcast, struct unicast_conn &uni
 	broadcast_close(&broadcast);
 	unicast_close(&unicast);
 	*/
+		return 0
+
 }
 
 //The function that is executed when an event happens
@@ -52,6 +54,7 @@ int process_event(int ev){
     	send_unicast_message(&unicast, data);
 	}
 	*/
+	return 0
 }
 
 //The function that is executed when the timer runs out
@@ -60,6 +63,8 @@ int periodic_processing(){
 	//Defined in messageSent.h.
     send_broadcast_message(&broadcast, data);
     */
+    return 0
+
 }
 /*-------------------------------------------------------------------------*/
 /****************************************************************************
