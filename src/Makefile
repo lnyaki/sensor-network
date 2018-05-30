@@ -1,7 +1,10 @@
-CONTIKI_PROJECT = sensor
+CONTIKI_PROJECT = sensor-new
 
 TARGET_LIBFILES += messages/sendMessage.h
+TARGET_LIBFILES += messages/receiveMessage.h
 
+HEADERS = sensor.h messages/receiveMessage.h messages/sendMessage.h
+OBJECTS = sensor-new.o
 
 all: $(CONTIKI_PROJECT)
 
