@@ -3,8 +3,8 @@
 #include <stdio.h>
 
 //Our own includes
-#include "messages/receiveMessage.h"
-#include "messages/sendMessage.h"
+//#include "messages/receiveMessage.h"
+//#include "messages/sendMessage.h"
 //#include "sensor.h"
 
 /*---------------------------------------------------------------------------*/
@@ -29,31 +29,39 @@ static struct unicast_conn unicast_connection;
 
 /*-------------------------------------------------------------------------*/
 int open_connections(){
+	/*
 	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
 	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callbacks);
+	*/
 }
 //Close the broadcast and unicast connections
 int close_connections(&broadcast, &unicast){
+	/*
 	broadcast_close(&broadcast);
 	unicast_close(&unicast);
+	*/
 }
 
 //The function that is executed when an event happens
 int process_event(int ev){
+	/*
 	//if we received a message
 	if(ev == PROCESS_EVENT_MSG){
 
     	//This is a mock example (funciton in messageSent.h)
     	send_unicast_message(&unicast, data);
 	}
+	*/
 }
 
 //The function that is executed when the timer runs out
 int periodic_processing(){
+	/*
 	//Defined in messageSent.h.
     send_broadcast_message(&broadcast, data);
+    */
 }
-
+/*-------------------------------------------------------------------------*/
 /****************************************************************************
 *                               PROCESS THREAD
 ffffffff***********************************************************f*************/
