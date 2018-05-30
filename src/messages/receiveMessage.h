@@ -5,9 +5,9 @@
 /****************************************************************************
 *                                 UNICAST
 *****************************************************************************/
-extern void unicast_received(struct unicast_conn *c, const rimeaddr_t *sender);
+extern void unicast_received(struct unicast_conn *c, const linkaddr_t *sender);
 
 /****************************************************************************
 *                                 BROADCAST
 *****************************************************************************/
-extern void broadcast_received(struct broadcast_conn *c, const rimeaddr_t *sender);
+extern void broadcast_received(struct broadcast_conn *c, const linkaddr_t *sender);
