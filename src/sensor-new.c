@@ -36,7 +36,7 @@ int open_connections(){
 	return 0;
 }
 //Close the broadcast and unicast connections
-int close_connections(struct broadcast_conn &broadcast, struct unicast_conn &unicast){
+int close_connections(struct broadcast_conn *broadcast, struct unicast_conn *unicast){
 	/*
 	broadcast_close(&broadcast);
 	unicast_close(&unicast);
