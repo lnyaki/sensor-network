@@ -7,7 +7,7 @@ rapport/*.synctex.gz
 
 #contiki stuff, and C stuff
 src/contiki-native.a
-messages/*
-obj_native/*
-symbols.c
-symbols.h
+src/messages/*
+src/obj_native/*
+src/symbols.c
+src/symbols.h
