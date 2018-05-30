@@ -82,7 +82,7 @@ PROCESS_THREAD(sensor_code, ev, data){
 	open_connections(broadcast_connection, unicast_connection);
 
 	//Data to broadcast
-	char data[50] = "toto";
+	char data = "t";
 
 	while(1){
 		static struct etimer et;

@@ -12,7 +12,7 @@ extern int broadcast_sent(struct broadcast_conn *c, int status, int num_tx);
 /****************************************************************************
 *                                BROADCAST FUNCTIONS
 *****************************************************************************/
-extern int send_broadcast_message(struct broadcast_conn *broadcast_connection, char[50] message);
+extern int send_broadcast_message(struct broadcast_conn *broadcast_connection, char message);
 
 extern int send_unicast_message();
 
