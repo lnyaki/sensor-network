@@ -31,41 +31,41 @@ const int PROCESS_WAIT_TIME = 5;
 
 /*-------------------------------------------------------------------------*/
 int open_connections(struct broadcast_conn *broadcast, struct unicast_conn *unicast){
-	/*
+
 	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
 	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callback);
-	*/
+	
 	return 0;
 }
 //Close the broadcast and unicast connections
 int close_connections(struct broadcast_conn *broadcast, struct unicast_conn *unicast){
-	/*
+	
 	broadcast_close(&broadcast);
 	unicast_close(&unicast);
-	*/
+
 		return 0;
 
 }
 
 //The function that is executed when an event happens
 int process_event(int ev){
-	/*
+	
 	//if we received a message
 	if(ev == PROCESS_EVENT_MSG){
 
     	//This is a mock example (funciton in messageSent.h)
     	send_unicast_message(&unicast, data);
 	}
-	*/
+
 	return 0;
 }
 
 //The function that is executed when the timer runs out
 int periodic_processing(){
-	/*
+	
 	//Defined in messageSent.h.
     send_broadcast_message(&broadcast, data);
-    */
+    
     return 0;
 
 }
