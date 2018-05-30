@@ -99,7 +99,7 @@ PROCESS_THREAD(sensor_code, ev, data){
 
     	//Otherwise, another event event has happened
     	else{
-    		process_event(ev, null);
+    		process_event(ev, NULL);
     	}
 	}
 
