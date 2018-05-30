@@ -18,7 +18,7 @@ int broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
 /****************************************************************************
 *                                BROADCAST FUNCTIONS
 *****************************************************************************/
-int send_broadcast_message(struct broadcast_conn broadcast broadcast_connection,char * message){
+int send_broadcast_message(struct broadcast_conn broadcast_connection,char * message){
 	packetbuf_copyfrom(message, strlen(message));
     broadcast_send(&broadcast_connection);
     printf("broadcast message sent\n");

@@ -79,7 +79,7 @@ PROCESS_THREAD(sensor_code, ev, data){
 	PROCESS_EXITHANDLER(close_connections(broadcast_connection, unicast_connection);)
 	PROCESS_BEGIN();
 
-	open_connections(&broadcast_connection, &unicast_connection);
+	open_connections(broadcast_connection, unicast_connection);
 
 	//Data to broadcast
 	char * data = "toto";
