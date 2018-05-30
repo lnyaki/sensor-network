@@ -23,7 +23,7 @@ AUTOSTART_PROCESSES(&sensor_code);
 *****************************************************************************/
 static const struct broadcast_callbacks broadcast_call = {broadcast_received};
 static struct broadcast_conn broadcast;
-static const struct unicast_callbacks unicast_callbacks = {unicast_received, unicast_sent};
+static const struct unicast_callbacks unicast_callback = {unicast_received, unicast_sent};
 static struct unicast_conn unicast_connection;
 
 //Waiting time of the process, in seconds
@@ -33,7 +33,7 @@ const int PROCESS_WAIT_TIME = 5;
 int open_connections(){
 	/*
 	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
-	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callbacks);
+	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callback);
 	*/
 	return 0;
 }
