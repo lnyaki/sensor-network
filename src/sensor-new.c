@@ -30,7 +30,7 @@ static struct unicast_conn unicast_connection;
 const int PROCESS_WAIT_TIME = 5;
 
 /*-------------------------------------------------------------------------*/
-int open_connections(){
+int open_connections(struct broadcast_conn *broadcast, struct unicast_conn *unicast){
 	/*
 	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
 	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callback);
@@ -77,7 +77,7 @@ PROCESS_THREAD(sensor_code, ev, data){
 	PROCESS_EXITHANDLER(close_connections(&broadcast, &unicast_connection);)
 	PROCESS_BEGIN();
 
-	open_connections();
+	open_connections(&broadcast, &unicast_connection);
 
 	//Data to broadcast
 	//char * data = null;
