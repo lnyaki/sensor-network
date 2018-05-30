@@ -56,7 +56,7 @@ int process_event(int ev, char* data){
 	if(ev == PROCESS_EVENT_MSG){
 
     	//This is a mock example (funciton in messageSent.h)
-    	send_unicast_message(&unicast_connection, data);
+    	//send_unicast_message(&unicast_connection, data);
 	}
 
 	return 0;
@@ -66,7 +66,7 @@ int process_event(int ev, char* data){
 int periodic_processing(struct broadcast_conn broadcast,char data){
 	
 	//Defined in messageSent.h.
-    send_broadcast_message(&broadcast, data);
+    //send_broadcast_message(&broadcast, data);
     
     return 0;
 
