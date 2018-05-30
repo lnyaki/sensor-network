@@ -22,7 +22,7 @@ AUTOSTART_PROCESSES(&sensor_code);
 *                                 CALLBACKS
 *****************************************************************************/
 static const struct broadcast_callbacks broadcast_call = {broadcast_received};
-static struct broadcast_conn broadcast;
+static struct broadcast_conn broadcast_connection;
 static const struct unicast_callbacks unicast_callback = {unicast_received};
 static struct unicast_conn unicast_connection;
 
@@ -76,10 +76,10 @@ int periodic_processing(char* data){
 *                               PROCESS THREAD
 ****************************************************************************/
 PROCESS_THREAD(sensor_code, ev, data){
-	PROCESS_EXITHANDLER(close_connections(*broadcast, *unicast_connection);)
+	PROCESS_EXITHANDLER(close_connections(&broadcast_connection, &unicast_connection);)
 	PROCESS_BEGIN();
 
-	open_connections(*broadcast, *unicast_connection);
+	open_connections(&broadcast_connection, &unicast_connection);
 
 	//Data to broadcast
 	//char * data = null;
@@ -99,7 +99,7 @@ PROCESS_THREAD(sensor_code, ev, data){
 
     	//Otherwise, another event event has happened
     	else{
-    		process_event(ev);
+    		process_event(ev, null);
     	}
 	}
 
