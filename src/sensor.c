@@ -1,11 +1,11 @@
 #include "contiki.h"
-#include "net/rime/rime.h"
+#include "net/rime.h"
 #include <stdio.h>
 
 //Our own includes
 #include "messages/receiveMessage.h"
 #include "messages/sendMessage.h"
-#include "sensor.h"
+//#include "sensor.h"
 
 /*---------------------------------------------------------------------------*/
 /*---------------------        Start Process    -----------------------------*/
