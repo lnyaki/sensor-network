@@ -35,12 +35,12 @@ const int UNICAST_CHANNEL 	= 101;
 int open_connections(struct broadcast_conn *broadcast, struct unicast_conn *unicast){
 
 	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
-	unicast_open(&unicast, UNICAST_CHANNEL, &unicast_callback);
+	//unicast_open(&unicast, UNICAST_CHANNEL, &unicast_callback);
 	
 	return 0;
 }
 //Close the broadcast and unicast connections
-int close_connections(struct broadcast_conn *broadcast, struct unicast_conn *unicast){
+int close_connections(struct broadcast_conn broadcast, struct unicast_conn unicast){
 	
 	broadcast_close(&broadcast);
 	unicast_close(&unicast);
