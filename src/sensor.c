@@ -11,7 +11,7 @@
 /*---------------------        Start Process    -----------------------------*/
 /*---------------------------------------------------------------------------*/
 PROCESS(sensor_code, "Sensor Communication Process");
-AUTOSTART_PROCESSES(&example_unicast_process);
+AUTOSTART_PROCESSES(&sensor_code);
 /*---------------------------------------------------------------------------*/
 
 
