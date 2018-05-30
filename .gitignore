@@ -4,3 +4,10 @@ rapport/*.pdf
 rapport/*.aux
 rapport/*.toc
 rapport/*.synctex.gz
+
+#contiki stuff, and C stuff
+src/contiki-native.a
+messages/*
+obj_native/*
+symbols.c
+symbols.h
