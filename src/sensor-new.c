@@ -33,6 +33,7 @@ int open_connections(){
 	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
 	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callbacks);
 	*/
+	return 0;
 }
 //Close the broadcast and unicast connections
 int close_connections(struct broadcast_conn &broadcast, struct unicast_conn &unicast){
@@ -40,7 +41,7 @@ int close_connections(struct broadcast_conn &broadcast, struct unicast_conn &uni
 	broadcast_close(&broadcast);
 	unicast_close(&unicast);
 	*/
-		return 0
+		return 0;
 
 }
 
@@ -54,7 +55,7 @@ int process_event(int ev){
     	send_unicast_message(&unicast, data);
 	}
 	*/
-	return 0
+	return 0;
 }
 
 //The function that is executed when the timer runs out
@@ -63,14 +64,14 @@ int periodic_processing(){
 	//Defined in messageSent.h.
     send_broadcast_message(&broadcast, data);
     */
-    return 0
+    return 0;
 
 }
 /*-------------------------------------------------------------------------*/
 /****************************************************************************
 *                               PROCESS THREAD
-ffffffff***********************************************************f*************/
-PROCESS_THREAD(example_broadcast_process, ev, data){
+****************************************************************************/
+PROCESS_THREAD(sensor_code, ev, data){
 	PROCESS_EXITHANDLER(close_connections(&broadcast, &unicast_connection);)
 	PROCESS_BEGIN();
 
