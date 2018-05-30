@@ -23,7 +23,8 @@ AUTOSTART_PROCESSES(&sensor_code);
 *****************************************************************************/
 static const struct broadcast_callbacks broadcast_call = {broadcast_received};
 static struct broadcast_conn broadcast;
-static const struct unicast_callbacks unicast_callback = {unicast_received, unicast_sent};
+//static const struct unicast_callbacks unicast_callback = {unicast_received, unicast_sent};
+static const struct unicast_callbacks unicast_callback = {unicast_received};
 static struct unicast_conn unicast_connection;
 
 //Waiting time of the process, in seconds
