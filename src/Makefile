@@ -1,4 +1,8 @@
 CONTIKI_PROJECT = sensor
+
+TARGET_LIBFILES += messages/sendMessage.h
+
+
 all: $(CONTIKI_PROJECT)
 
 #UIP_CONF_IPV6=1
