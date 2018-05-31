@@ -79,13 +79,16 @@ A \textit{Parent Message} is sent by a member of the network after receiving a D
 
 \subsubsection{ACK-Parent}
 When a node which isn't part of the network receives a \textit{Parent message}, it can decide to set the sender of the \textit{Parent message} as its own parent.it then sends a unicast \textit{ACK-Parent message} to the parent, to inform it that it has a new child. After sending this \textit{ACK-Parent message}, the child node officially becomes part of the network.
-\subsubsection{ACK-Info Message}
 
 \subsubsection{Information Message}
-Periodically, each node sends takes information from it's sensors and sends it to its parent. To do this, an \textit{Information message} is used.
+An \textit{information Message} is a message sent by a child to its parent.
+
+\subsubsection{ACK-Info Message}
+This message is a unicast message sent by a parent after receiving an \textit{Information Message} from one of its children. This serves as a confirmation that the message has been properly received.
+
 
 \subsubsection{Root Message}
-
+Periodically, each node sends takes information from it's sensors and sends it to its parent. To do this, an \textit{Information message} is used.
 
 
 \section{MQTT infrastructure}
