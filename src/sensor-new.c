@@ -57,8 +57,8 @@ void broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
 /****************************************************************************
 *                                BROADCAST FUNCTIONS
 *****************************************************************************/
-void send_broadcast_message(struct broadcast_conn broadcast_connection,char[50] message){
-	packetbuf_copyfrom(message, strlen(message));
+void send_broadcast_message(struct broadcast_conn broadcast_connection,char* message){
+	packetbuf_copyfrom(&message, strlen(&message));
     broadcast_send(&broadcast_connection);
     printf("broadcast message sent\n");
 }
@@ -122,7 +122,7 @@ void process_event(int ev, char* data){
 }
 
 //The function that is executed when the timer runs out
-void periodic_processing(struct broadcast_conn broadcast,char data){
+void periodic_processing(struct broadcast_conn broadcast,char* data){
 	
 	//Defined in messageSent.h.
     //send_broadcast_message(&broadcast, data);
