@@ -42,10 +42,15 @@ First, we need implement a custom routing protocol for sensor networks, similar 
 Lastly, the sensor data 
 \end{comment}
 \section{System Architecture}
-The scope of this project covers 
+The scope of this project covers three separate part :
+\begin{itemize}
+\item{A IoT sensor network}
+\item{A MQTT publish/subscribe infrastructure}
+\item{A Rime-MQTT Gateway which interfaces the sensor network with the MQTT infrastructure}
+\end{itemize}
 
 \begin{figure}
-  \includegraphics[width=\linewidth]{img/architecture-1.jpg}
+  \includegraphics[width=\linewidth]{img/architecture-2.jpg}
   \caption{An overview of the system.}
   \label{fig:architecture1}
 \end{figure}
@@ -61,8 +66,33 @@ When a node that is already part
 
 \subsection{Leaving a graph}
 
+
 \subsection{Routing Message Types}
-\subsubsection{Routing Message Format}
+\subsubsection{Discovery}
+When a node has doesn't belong to the network, it will try sending a broadcast request for potential parent nodes to manifest themselves. This is called a \textit{Discovery message}.
+
+\subsubsection{Parent}
+A \textit{Parent Message} is sent by a member of the network after receiving a Discovery message. This message advertises the parent's address as well as rank within the network.
+
+\subsubsection{ACK}
+When a node who isn't part of the network receives a \textit{Parent message}, it can decide to set the sender of the \textit{Parent message} as its own parent. When the child node decides to add a parent, it sends unicast \textit{ACK message} to the parent, to inform it that it has a new child. Afterwards, the child node is officially part of the network.
+
+\subsubsection{Information message}
+Periodically, each node sends takes information from it's sensors and sends it to its parent. To do this, an \textit{Information message} is used.
+
+
+
+
+\begin{comment}
+Si je comprend :
+1) Nouveau node arrive : Discovery message (broadcast)
+2) Parents potentiel répondent : VADOR message
+3) Le noeud choisi un parent et envoi : ACK_PARENT (unicast)
+
+Et pendant leur fonctionnement, les différents noeuds envoient périodiquement des requête INFO  contenant les relevés des senseurs
+gg - Aujourd'hui à 20:42
+yup et 4) parent ajoute fils à une liste de ses enfants pour pouvoir leur broadcast les configs
+\end{comment}
 
 
 \section{MQTT infrastructure}
@@ -75,6 +105,9 @@ In our case, the MQTT broker will be running on a regular laptop.
 
 
 \subsection{MQTT Publishers}
+In this project, we have two distinct MQTT publishers. The first MQTT publisher is the \textbf{Rime-MQTT Gateway}, which publishes topics on behalf of the sensor network nodes.\\
+
+The second publisher is the \textbf{MQTT client} used for configuring the sensor network. We use this MQTT configuration client to send configuration commands to the sensor network, in place of using a direct command line interface on the Gateway machine.
 
 \subsection{MQTT Subscribers}
 \subsection{Regular MQTT clients}
@@ -90,7 +123,7 @@ The Rime-MQTT Gateway is a python program, that serves as an interface between t
 On one side, it receives data from the root node of the sensor network and translates them into MQTT publish messages that it sends to the MQTT broker. On the other side, it subscribes to the MQTT broker for configurations messages that it then translate into a format that the root of the sensor node understands.
 
 \begin{figure}
-  \includegraphics[width=\linewidth]{img/communication-1.jpg}
+  \includegraphics[width=\linewidth]{img/communication-2.jpg}
   \caption{This schema shows how data transits through the Rime-MQTT Gateway.}
   \label{fig:communication1}
 \end{figure}
