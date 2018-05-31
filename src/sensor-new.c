@@ -1,15 +1,81 @@
+/*
+ * Copyright (c) 2007, Swedish Institute of Computer Science.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * This file is part of the Contiki operating system.
+ *
+ */
 #include "contiki.h"
 #include "net/rime/rime.h"
+#include "lib/list.h"
+#include "random.h"
+
+#include "dev/button-sensor.h"
+#include "dev/leds.h"
+
 #include <stdio.h>
 
-//Our own includes
-//#include "sensor.h"
+/* Buffer size */
+#define BUFFER_SIZE 100
+
+/*TAG IDs*/
+#define TAG_INFO 1
+#define TAG_DISCOVERY 2
+#define TAG_ACK_PARENT 3
+
+/* This are the messages structures*/
+struct info_message{
+	int tag;
+	int rank; // own rank
+};	
+	
+struct simple_tag{
+	int tag;
+};
+
+struct node{
+	linkaddr_t addr; // parent address
+	int rank;  //parent rank
+};
+
+/*Broadcast and unicast structures*/
+static struct broadcast_conn broadcast;
+static struct unicast_conn unicast;
+
+/*nodes variables*/
+//static node *parent;
+LIST(sons_list); // dynamic list of nodes (all sons)
 
 /*---------------------------------------------------------------------------*/
-/*---------------------        Start Process    -----------------------------*/
-/*-----------------------------------------------------------------*----------*/
-PROCESS(sensor_code, "Sensor Communication Process");
-AUTOSTART_PROCESSES(&sensor_code);
+/*------------------      Process Declaration   -----------------------------*/
+/*---------------------------------------------------------------------------*/
+PROCESS(broadcast_process, "Broadcast Process");
+PROCESS(unicast_process, "Unicast Process");
+AUTOSTART_PROCESSES(&broadcast_process, &unicast_process);
 /*---------------------------------------------------------------------------*/
 /************************************************************************************
 ///////////////                                                       ///////////////
@@ -20,16 +86,40 @@ AUTOSTART_PROCESSES(&sensor_code);
 *                                 CALLBACKS
 *****************************************************************************/
 
-static void unicast_received(struct unicast_conn *c, const linkaddr_t *sender)
-{
-  printf("unicast message received from %d.%d\n",
-	 sender->u8[0], sender->u8[1]);
+static void unicast_received(struct unicast_conn *c, const linkaddr_t *from){
+   printf("unicast message received from %d.%d\n",
+	 from->u8[0], from->u8[1]);
+
+
+	/*
+	Unicast messages can have 2 reasons:
+	New parent from a DIS
+		=> ACK parent chosen
+	Message from son
+		=> pass to parent
+		=> ACK son
+	*/
+	//packetbuf_copyfrom(&dis,sizeof(dis));
+	//unicast_send(&unicast, from);
 }
 
-static void broadcast_received(struct broadcast_conn *c, const linkaddr_t *sender)
-{
-  printf("broadcast message received from %d.%d: '%s'\n",
-         sender->u8[0], sender->u8[1], (char *)packetbuf_dataptr());
+static void broadcast_received(struct broadcast_conn *c, const linkaddr_t *from){
+	struct simple_tag *msg_rcv;
+	struct info_message *msg_2_snd;
+
+	/*data received*/
+	msg_rcv = packetbuf_dataptr(); // pointer to data
+
+	/*data to send*/
+	msg_2_snd->tag = TAG_INFO;
+	
+	printf("broadcast message received from %d.%d: '%d'\n", from->u8[0], from->u8[1], msg_rcv->tag);
+
+	/*checks if the broadcast message is a Dis*/
+	if (msg_rcv->tag == TAG_DISCOVERY){
+		packetbuf_copyfrom(&msg_2_snd,sizeof(msg_2_snd));
+		unicast_send(&unicast, from);
+		printf("Unicast message sent to son: %d\n", msg_2_snd->tag);
 }
 
 /************************************************************************************
@@ -57,10 +147,10 @@ void broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
 /****************************************************************************
 *                                BROADCAST FUNCTIONS
 *****************************************************************************/
-void send_broadcast_message(struct broadcast_conn broadcast_connection,char* message){
-	packetbuf_copyfrom(message, strlen(message));
+void send_broadcast_message(struct broadcast_conn broadcast_connection,struct simple_tag message){
+	packetbuf_copyfrom(&message, sizeof(struct simple_tag));
     broadcast_send(&broadcast_connection);
-    printf("broadcast message sent\n");
+    printf("broadcast message sent %d\n",dis.tag);
 }
 
 void send_unicast_message(){}
@@ -86,28 +176,23 @@ void sendACK(){}
 /****************************************************************************
 *                                 CALLBACKS
 *****************************************************************************/
-static const struct broadcast_callbacks broadcast_call = {broadcast_received};
-static struct broadcast_conn broadcast_connection;
+static const struct broadcast_callbacks broadcast_callback = {broadcast_received};
 static const struct unicast_callbacks unicast_callback = {unicast_received};
+
+/****************************************************************************
+*                                 CONNECTIONS
+*****************************************************************************/
+static struct broadcast_conn broadcast_connection;
 static struct unicast_conn unicast_connection;
 
-//Waiting time of the process, in seconds
+/****************************************************************************
+*                                 CONSTANTS
+*****************************************************************************/
 const int PROCESS_WAIT_TIME = 5;
 const int BROADCAST_CHANNEL = 100;
 const int UNICAST_CHANNEL 	= 101;
 
 /*-------------------------------------------------------------------------*/
-void open_connections(struct broadcast_conn broadcast, struct unicast_conn unicast){
-
-	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
-	//unicast_open(&unicast, UNICAST_CHANNEL, &unicast_callback);
-}
-//Close the broadcast and unicast connections
-void close_connections(struct broadcast_conn broadcast, struct unicast_conn unicast){
-	
-	broadcast_close(&broadcast);
-	unicast_close(&unicast);
-}
 
 //The function that is executed when an event happens
 void process_event(int ev, char* data){
@@ -133,32 +218,65 @@ void periodic_processing(struct broadcast_conn broadcast,char* data){
 /****************************************************************************
 *                               PROCESS THREAD
 ****************************************************************************/
-PROCESS_THREAD(sensor_code, ev, data){
-	PROCESS_EXITHANDLER(close_connections(broadcast_connection, unicast_connection);)
+/*------------------------    BROADCAST    --------------------------------*/
+PROCESS_THREAD(broadcast_process, ev, data){
+
+	PROCESS_EXITHANDLER(broadcast_close(&broadcast_connection);)
 	PROCESS_BEGIN();
 
-	open_connections(broadcast_connection, unicast_connection);
+	broadcast_open(&broadcast_connection, BROADCAST_CHANNEL,&broadcast_callback);
 
-	//Data to broadcast
-	char *data = "t";
+	/* Variables initialization */
+	static struct etimer et;
+	struct simple_tag dis;
+
+
+	dis.tag = TAG_DISCOVERY; // Looking for parent
 
 	while(1){
-		static struct etimer et;
-    	//linkaddr_t addr = null;
+
     
     	etimer_set(&et, CLOCK_SECOND * PROCESS_WAIT_TIME);
     
+
+		/* Delay 2-4 seconds */
+		etimer_set(&et, CLOCK_SECOND * 4 + random_rand() % (CLOCK_SECOND * 4));
+
     	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-    	//Check if timer expired
-    	if(ev == PROCESS_EVENT_TIMER){
-    		periodic_processing(broadcast_connection, data);
-    	}
+    	send_broadcast_message(broadcast_connection, message)
+	}
 
-    	//Otherwise, another event event has happened
-    	else{
-    		process_event(ev, NULL);
-    	}
+	PROCESS_END();
+}
+
+/*------------------------    UNICAST    --------------------------------*/
+/*This unicast process will be used to send the data to the parent*/
+PROCESS_THREAD(unicast_process, ev, data){
+	PROCESS_EXITHANDLER(unicast_close(&unicast_connection);)
+
+	PROCESS_BEGIN();
+
+	unicast_open(&unicast_connection, UNICAST_CHANNEL, &unicast_callback);
+
+	while(1) {
+		static struct etimer et;
+		linkaddr_t addr;
+		struct simple_tag dio;
+		struct node parent;
+
+		etimer_set(&et, 100*CLOCK_SECOND);
+
+		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+
+		//packetbuf_copyfrom(&dio,sizeof(struct simple_tag)); // TODO pk &dis, normal pour une struct ?
+		
+		//addr.u8[0] = 1;
+		//addr.u8[1] = 0;
+		//if(!linkaddr_cmp(&papa->addr, &linkaddr_node_addr)) {
+		//	unicast_send(&unicastc, &parent->addr);
+		//}
+
 	}
 
 	PROCESS_END();
