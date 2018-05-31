@@ -42,7 +42,7 @@ static void broadcast_received(struct broadcast_conn *c, const linkaddr_t *sende
 /****************************************************************************
 *                                 CALLBACKS
 *****************************************************************************/
-int unicast_sent(struct unicast_conn *c, int status, int num_tx){
+void unicast_sent(struct unicast_conn *c, int status, int num_tx){
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
   if(linkaddr_cmp(dest, &linkaddr_null)) {
     return;
@@ -51,7 +51,7 @@ int unicast_sent(struct unicast_conn *c, int status, int num_tx){
     dest->u8[0], dest->u8[1], status, num_tx);
 }
 
-int broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
+void broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
 
 }
 
@@ -59,23 +59,23 @@ int broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
 /****************************************************************************
 *                                BROADCAST FUNCTIONS
 *****************************************************************************/
-int send_broadcast_message(struct broadcast_conn broadcast_connection,char[50] message){
+void send_broadcast_message(struct broadcast_conn broadcast_connection,char[50] message){
 	packetbuf_copyfrom(message, strlen(message));
     broadcast_send(&broadcast_connection);
     printf("broadcast message sent\n");
 }
 
-int send_unicast_message(){}
+void send_unicast_message(){}
 
-int sendHelloMessage(){}
+void sendHelloMessage(){}
 
-int sendDiscoveryMessage(){}
+void sendDiscoveryMessage(){}
 
-int sendNodeInformationMessage(){}
+void sendNodeInformationMessage(){}
 
-int sendDataMessage(){}
+void sendDataMessage(){}
 
-int sendACK(){}
+void sendACK(){}
 
 
 /************************************************************************************
@@ -99,25 +99,20 @@ const int BROADCAST_CHANNEL = 100;
 const int UNICAST_CHANNEL 	= 101;
 
 /*-------------------------------------------------------------------------*/
-int open_connections(struct broadcast_conn broadcast, struct unicast_conn unicast){
+void open_connections(struct broadcast_conn broadcast, struct unicast_conn unicast){
 
 	broadcast_open(&broadcast, BROADCAST_CHANNEL, &broadcast_call);
 	//unicast_open(&unicast, UNICAST_CHANNEL, &unicast_callback);
-	
-	return 0;
 }
 //Close the broadcast and unicast connections
-int close_connections(struct broadcast_conn broadcast, struct unicast_conn unicast){
+void close_connections(struct broadcast_conn broadcast, struct unicast_conn unicast){
 	
 	broadcast_close(&broadcast);
 	unicast_close(&unicast);
-
-		return 0;
-
 }
 
 //The function that is executed when an event happens
-int process_event(int ev, char* data){
+void process_event(int ev, char* data){
 	
 	//if we received a message
 	if(ev == PROCESS_EVENT_MSG){
@@ -126,16 +121,14 @@ int process_event(int ev, char* data){
     	//send_unicast_message(&unicast_connection, data);
 	}
 
-	return 0;
 }
 
 //The function that is executed when the timer runs out
-int periodic_processing(struct broadcast_conn broadcast,char data){
+void periodic_processing(struct broadcast_conn broadcast,char data){
 	
 	//Defined in messageSent.h.
     //send_broadcast_message(&broadcast, data);
     
-    return 0;
 
 }
 /*-------------------------------------------------------------------------*/
