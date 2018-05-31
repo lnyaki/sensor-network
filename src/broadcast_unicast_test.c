@@ -1,42 +1,3 @@
-/*
- * Copyright (c) 2007, Swedish Institute of Computer Science.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * This file is part of the Contiki operating system.
- *
- */
-
-/**
- * \file
- *         Testing the broadcast layer in Rime
- * \author
- *         Adam Dunkels <adam@sics.se>
- */
-
 #include "contiki.h"
 #include "net/rime/rime.h"
 #include "lib/list.h"
@@ -44,6 +5,18 @@
 
 #include "dev/button-sensor.h"
 #include "dev/leds.h"
+#include "lib/sensors.h"
+#include "dev/i2cmaster.h"
+#include "dev/tmp102.h"
+#include "dev/adxl345.h"
+#include "dev/battery-sensor.h"
+#include "dev/serial-line.h"
+static char periodic_mode = 1;
+static char has_subscribers = 0;
+static struct etimer et_temp;
+static struct etimer et_accel;
+static struct etimer et_battery;
+static process_event_t new_subscriber;
 
 #include <stdio.h>
 
@@ -56,6 +29,10 @@
 #define TAG_ROOT 6
 // #define TAG_ACK_ROOT 7 TODO Pas sur si nécessaire
 
+#define TAG_TEMP 'T'
+#define TAG_BATTERY 'B'
+#define TAG_ACCEL 'Z'
+#define READ_INTERVAL (CLOCK_SECOND)
 
 
 
@@ -86,10 +63,13 @@ LIST(lukes_list); // dynamic list of nodes (all lukes)
 LIST(vadors_list); // dynamic list of possible fathers
 
 /*---------------------------------------------------------------------------*/
-PROCESS(example_broadcast_process, "Broadcast example");
-PROCESS(example_unicast_process, "Example unicast");
+PROCESS(broadcast_process, "Broadcast");
+PROCESS(unicast_process, "Example");
+PROCESS(temp_process, "TMP102 Temperature sensor process");
+PROCESS(accel_process, "ADXL345 Accelerometer sensor process");
+PROCESS(battery_process, "Battery sensor process");
 
-AUTOSTART_PROCESSES(&example_broadcast_process,&example_unicast_process);
+AUTOSTART_PROCESSES(&broadcast_process,&unicast_process,&temp_process,&accel_process,&battery_process);
 /*---------------------------------------------------------------------------*/
 
 /* Function called when receiving a brodcast message*/
@@ -177,7 +157,7 @@ static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
 
 /* This broadcast process will be used to find a parent */
 
-PROCESS_THREAD(example_broadcast_process, ev, data){
+PROCESS_THREAD(broadcast_process, ev, data){
 	static struct etimer et;
 	struct simple_tag dis;
 
@@ -262,7 +242,7 @@ static const struct unicast_callbacks unicast_callbacks = {recv_uc};
 
 /*This unicast process will be used to send the data to the parent*/
 
-PROCESS_THREAD(example_unicast_process, ev, data){
+PROCESS_THREAD(unicast_process, ev, data){
 	PROCESS_EXITHANDLER(unicast_close(&unicast);)
 
 	PROCESS_BEGIN();
@@ -294,4 +274,119 @@ PROCESS_THREAD(example_unicast_process, ev, data){
 
 	}
 	PROCESS_END();
+}
+
+/* This process will read battery tension value and send it to the parent */
+
+PROCESS_THREAD(battery_process, ev, data) {
+    PROCESS_BEGIN();
+
+    uint16_t battery;
+    static uint16_t battery_last = 0;
+    SENSORS_ACTIVATE(battery_sensor);
+
+    while(1) {
+        if(!has_subscribers)
+            PROCESS_WAIT_EVENT_UNTIL(ev == new_subscriber);
+        etimer_set(&et_battery, READ_INTERVAL);
+        PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et_battery));
+
+        battery = battery_sensor.value(0);
+
+        if(!periodic_mode && battery == battery_last)
+            continue;
+        battery_last = battery;
+
+        uint8_t msg[4];
+        msg[0] = TAG_ROOT;
+        msg[1] = TAG_BATTERY;
+        msg[2] = (battery >> 8);
+        msg[3] = (battery & 0xff);
+
+        printf("%c %d\n", TAG_BATTERY, battery);
+        packetbuf_copyfrom(msg,sizeof(msg));
+        unicast_send(&unicast, &parent.addr);
+        printf("Sending battery data to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]); //  problem with addresses
+    }
+    PROCESS_END();
+}
+
+/* This process will read the accelerometer value and send it to the parent */
+
+PROCESS_THREAD(accel_process, ev, data) {
+    PROCESS_BEGIN();
+
+    int16_t x, y, z;
+    static int16_t x_last = 0, y_last = 0, z_last = 0;
+    accm_init();
+        
+
+    while(1) {
+        uint8_t msg[8];
+        if(!has_subscribers)
+            PROCESS_WAIT_EVENT_UNTIL(ev == new_subscriber);
+        etimer_set(&et_accel, READ_INTERVAL);
+        PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et_accel));
+
+        x = accm_read_axis(X_AXIS);
+	y = accm_read_axis(Y_AXIS);
+	z = accm_read_axis(Z_AXIS);
+
+        if(!periodic_mode && x == x_last && y == y_last && z == z_last)
+            continue;
+        x_last = x;
+        y_last = y;
+        z_last = z;
+
+        msg[0] = TAG_ROOT;
+        msg[1] = TAG_ACCEL;
+        msg[2] = x >> 8;
+        msg[3] = x & 0xff;
+        msg[4] = y >> 8;
+        msg[5] = y & 0xff;
+        msg[6] = z >> 8;
+        msg[7] = z & 0xff;
+
+        printf("%c %d %d %d\n", TAG_ACCEL, x, y, z);
+        packetbuf_copyfrom(msg,sizeof(msg));
+        unicast_send(&unicast, &parent.addr);
+        printf("Sending accelerometer data to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]); //  problem with addresses
+    }
+    PROCESS_END();
+}
+
+/* This process will read the temperature sensor and send it to the parent */
+
+PROCESS_THREAD(temp_process, ev, data) {
+    PROCESS_BEGIN();
+
+    int16_t temp;
+    static int16_t temp_last = 0;
+
+    tmp102_init();
+
+    while(1) {
+        uint8_t msg[4];
+        if(!has_subscribers)
+            PROCESS_WAIT_EVENT_UNTIL(ev == new_subscriber);
+        etimer_set(&et_temp, READ_INTERVAL);
+        PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et_temp));
+
+        temp = tmp102_read_temp_raw();
+
+        if(!periodic_mode && temp == temp_last)
+            continue;
+        temp_last = temp;
+
+        msg[0] = TAG_ROOT;
+        msg[1] = TAG_TEMP;
+        msg[2] = temp >> 8;
+        msg[3] = temp & 0xff;
+
+        printf("%c %d\n", TAG_TEMP, temp);
+        packetbuf_copyfrom(msg,sizeof(msg));
+        unicast_send(&unicast, &parent.addr);
+        printf("Sending temperature data to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]); //  problem with addresses
+    }
+    PROCESS_END();
 }

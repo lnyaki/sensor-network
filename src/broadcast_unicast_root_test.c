@@ -1,51 +1,35 @@
-/*
- * Copyright (c) 2007, Swedish Institute of Computer Science.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * This file is part of the Contiki operating system.
- *
- */
-
-/**
- * \file
- *         Testing the broadcast layer in Rime
- * \author
- *         Adam Dunkels <adam@sics.se>
- */
-
+#include <stdio.h>
 #include "contiki.h"
-#include "net/rime/rime.h"
+#include "lib/sensors.h"
+#include "dev/i2cmaster.h"
+#include "dev/tmp102.h"
+#include "dev/adxl345.h"
+#include "dev/battery-sensor.h"
+#include "dev/serial-line.h"
+
+#include "net/rime/rime.h" // TODO probably needed
 #include "lib/list.h"
 #include "random.h"
 
-#include "dev/button-sensor.h"
-#include "dev/leds.h"
+#define READ_INTERVAL (CLOCK_SECOND/10)
 
-#include <stdio.h>
+PROCESS(test_serial, "Serial receive process");
+PROCESS(ask_config, "Startup config ask");
+
+AUTOSTART_PROCESSES(&ask_config, &test_serial);
+
+static struct etimer et_temp;
+static struct etimer et_accel;
+static struct etimer et_battery;
+
+#define ASK_CONFIG 'A'
+#define TEMP 'T'
+#define ACCEL 'Z'
+#define BATTERY 'B'
+#define UPDATE_MODE 'U'
+#define PERIODIC_MODE 'P'
+#define STOP_SEND 'X'
+#define START_SEND 'S'
 
 /* TAG IDs */
 #define TAG_INFO 1
@@ -53,10 +37,16 @@
 #define TAG_DISCOVERY 3
 #define TAG_VADOR 4
 #define TAG_ACK_PARENT 5
+#define TAG_ROOT 6
+
+static char periodic_mode = 1;
+static char has_subscribers = 0;
+
+static process_event_t new_subscriber;
 
 /* This are the messages structures */
 struct node{
-	struct node *next; // we need it for our fathers and sons list
+	struct node *next; // needed for fathers and sons list
 	linkaddr_t addr; // parent address
 	int rank;  //parent rank
 };
@@ -70,8 +60,6 @@ struct simple_tag{
 	int tag;
 };
 
-
-
 /* Broadcast and unicast structures */
 static struct broadcast_conn broadcast;
 static struct unicast_conn unicast;
@@ -80,13 +68,17 @@ static struct unicast_conn unicast;
 static uint8_t node_rank = 0;
 static struct node *parent = NULL;
 LIST(lukes_list); // dynamic list of nodes (all lukes)
-LIST(vadors_list); // dynamic list of possible fathers
 
 /*---------------------------------------------------------------------------*/
-PROCESS(example_broadcast_process, "Broadcast example");
-PROCESS(example_unicast_process, "Example unicast");
 
-AUTOSTART_PROCESSES(&example_broadcast_process,&example_unicast_process);
+float floor(float x) {
+    if(x >= 0.0f) {
+        return (float)((int)x);
+    } else {
+        return (float)((int)x - 1);
+    }
+}
+
 /*---------------------------------------------------------------------------*/
 
 /* Function called when receiving a brodcast message*/
@@ -115,6 +107,8 @@ msg_rcv->tag);
 	}
 }
 
+/*---------------------------------------------------------------------------*/
+
 
 /* Function called when receiving a unicast message */
 static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
@@ -128,13 +122,6 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 	struct simple_tag pong;
 
 	switch(ptr_data[0]) {
-
-		case TAG_VADOR :
-			printf("Adding daddy to the list\n");
-			linkaddr_copy(&inc_node_info->addr,from);
-			inc_node_info->rank = ptr_data[1];
-			list_add(vadors_list,inc_node_info);
-			break;
 		case TAG_ACK_PARENT:
 			printf("Adding son to the list\n");
 			linkaddr_copy(&inc_node_info->addr,from);
@@ -146,94 +133,54 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 			packetbuf_copyfrom(&pong,sizeof(struct simple_tag));
 			unicast_send(&unicast, from);
 			break;
+		case TAG_ROOT:
+			// TODO What do we do with the sensor data ?
 	}
 	
 }
+
+
+PROCESS_THREAD(ask_config, ev, data){
+    PROCESS_BEGIN();
+    printf("%c\n", ASK_CONFIG);
+    PROCESS_END();
+}
+
 
 /*---------------------------------------------------------------------------*/
 
 static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
-
-/*---------------------------------------------------------------------------*/
-
-/* This broadcast process will be used to find a parent */
-
-PROCESS_THREAD(example_broadcast_process, ev, data){
-	static struct etimer et;
-	struct simple_tag dis;
-
-	dis.tag = TAG_DISCOVERY; // Looking for parent
-
-	PROCESS_EXITHANDLER(broadcast_close(&broadcast);)
-
-	PROCESS_BEGIN();
-
-	broadcast_open(&broadcast, 129, &broadcast_call);
-
-	/*while(1) {
-
-		
-		etimer_set(&et, CLOCK_SECOND * 8 + random_rand() % (CLOCK_SECOND * 4));
-
-		
-		
-		
-		if(list_head(vadors_list) != NULL && parent == NULL){
-			struct node *vador_list_ptr = list_head(vadors_list); // father's list pointer
-			int best_rank = vador_list_ptr->rank;
-			struct node *i;
-			for(i = vador_list_ptr; i != NULL; i = list_item_next(i)){
-				if(vador_list_ptr->rank < best_rank && vador_list_ptr->rank < node_rank){
-					best_rank = vador_list_ptr->rank;
-					parent = vador_list_ptr;
-				}
-			}
-
-			
-			node_rank = best_rank+1; // 
-		}
-		
-		if(parent == NULL){ // no parent then rebroadcast
-			packetbuf_copyfrom(&dis,sizeof(struct simple_tag));
-			broadcast_send(&broadcast);
-			printf("Looking for my vader %d\n",dis.tag);
-		}
-
-		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-
-		
-	}*/
-	
-	PROCESS_END();
-}
-
-/*---------------------------------------------------------------------------*/
-
 static const struct unicast_callbacks unicast_callbacks = {recv_uc};
 
-/*---------------------------------------------------------------------------*/
+PROCESS_THREAD(test_serial, ev, data)
+{
 
-/*This unicast process will be used to send the data to the parent*/
-
-PROCESS_THREAD(example_unicast_process, ev, data){
 	PROCESS_EXITHANDLER(unicast_close(&unicast);)
+	PROCESS_EXITHANDLER(broadcast_close(&broadcast);)
 
-	PROCESS_BEGIN();
+    PROCESS_BEGIN();
 
-	unicast_open(&unicast, 146, &unicast_callbacks);
+    unicast_open(&unicast, 146, &unicast_callbacks);
+    broadcast_open(&broadcast, 129, &broadcast_call);
 
-	while(1) {
-		static struct etimer et;
-		linkaddr_t addr;
-		struct simple_tag dio;
-		struct node parent;
-
-		etimer_set(&et, 100*CLOCK_SECOND);
-
-		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-
-		/* If I get a serial input transform and send to lukes */
-	}
-
-	PROCESS_END();
+    for(;;) {
+        PROCESS_YIELD();
+        if(ev == serial_line_event_message) {
+            switch(((char *)data)[0]){
+                case UPDATE_MODE:
+                    periodic_mode = 0;
+                    break;
+                case PERIODIC_MODE:
+                    periodic_mode = 1;
+                    break;
+                case START_SEND:
+                    has_subscribers = 1;
+                    break;
+                case STOP_SEND:
+                    has_subscribers = 0;
+                    break;
+            }
+        }
+    }
+    PROCESS_END();
 }
