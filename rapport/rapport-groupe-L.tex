@@ -41,12 +41,33 @@ First, we need implement a custom routing protocol for sensor networks, similar 
 \\
 Lastly, the sensor data 
 \end{comment}
-\section{Architecture}
-
-\section{Routing Protocol}
-\subsection{Message Types}
+\section{System Architecture}
 
 
+\begin{figure}
+  \includegraphics[width=\linewidth]{img/network-diagram-1.jpg}
+  \caption{An overview of the system.}
+  \label{fig:network1}
+\end{figure}
+\section{Wireless Mesh Network and Routing Protocol}
+One of the objectives of this project is the implementation of a routing protocol, similar to RPL (Routing Protocol for Low-Power and Lossy Networks). A routing protocol is needed in order create a Wireless Mesh Network, and have the information propagate properly from the individual nodes to the root node of the network.\\
+
+Any given node that isn't part of the network should have a way to become a member of the network, and start publishing information. Any node of the network should also be able to disappear without compromising the integrity of the network as long as the node is not a critical junction of two parts of the network graph.
+
+\subsection{Joining a graph}
+\subsection{Leaving a graph}
+
+\subsection{Routing Message Types}
+\subsubsection{Routing Message Format}
+
+
+\section{MQTT infrastructure}
+\subsection{MQTT Broker}
+\subsection{MQTT Publishers}
+\subsection{MQTT Subscribers}
+
+\section{Rime-MQTT Gateway}
+\subsection{Wireless Mesh Network Configuration}
 
 \end{document}
 
