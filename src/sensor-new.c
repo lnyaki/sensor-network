@@ -58,7 +58,7 @@ void broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
 *                                BROADCAST FUNCTIONS
 *****************************************************************************/
 void send_broadcast_message(struct broadcast_conn broadcast_connection,char* message){
-	packetbuf_copyfrom(&message, strlen(&message));
+	packetbuf_copyfrom(message, strlen(message));
     broadcast_send(&broadcast_connection);
     printf("broadcast message sent\n");
 }
@@ -140,7 +140,7 @@ PROCESS_THREAD(sensor_code, ev, data){
 	open_connections(broadcast_connection, unicast_connection);
 
 	//Data to broadcast
-	char data = 't';
+	char *data = "t";
 
 	while(1){
 		static struct etimer et;
