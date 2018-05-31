@@ -110,6 +110,8 @@ In this project, we have two distinct MQTT publishers. The first MQTT publisher 
 The second publisher is the \textbf{MQTT client} used for configuring the sensor network. We use this MQTT configuration client to send configuration commands to the sensor network, in place of using a direct command line interface on the Gateway machine.
 
 \subsection{MQTT Subscribers}
+The MQTT broker allows for clients to both publish data, or subscribe in order to be kept updated on data. In this project, we have two different MQTT subscribers : regular MQTT clients, and the Rime-MQTT Gateway.
+
 \subsection{Regular MQTT clients}
 For demonstration purpose, one or several clients will run on our machine, and subscribe to specific topics, to receive information from the sensor network. Once subscribed to the appropriate topic, each subscriber will receive periodical information from the network.
 
@@ -120,7 +122,16 @@ In order to implement the possibility of modifying the IoT network configuration
 \section{Rime-MQTT Gateway}
 The Rime-MQTT Gateway is a python program, that serves as an interface between the sensor network and the MQTT broker.\\
 
-On one side, it receives data from the root node of the sensor network and translates them into MQTT publish messages that it sends to the MQTT broker. On the other side, it subscribes to the MQTT broker for configurations messages that it then translate into a format that the root of the sensor node understands.
+On one side, it receives data from the root node of the sensor network and translates them into MQTT publish messages that it sends to the MQTT broker. On the other side, it subscribes to the MQTT broker for configurations messages that it then translate into a format that the root of the sensor node understands.\\
+
+\subsection{Prevention of Meaningless Communication}
+Most IoT object are powered by battery and are therefore under strict energy requirements. It is of the utmost importance that the battery life be preserved as much as possible. As a consequence, we want to avoid sending data when no one is asking for it.\\
+
+In order to do that, the Gateway subscribes to a MQTT topic that counts the number of people subscribed to the MQTT topics published by the sensor network (\$SYS/broker/subscriptions/count). When the number of subscribers change, the Gateway receives an update.\\
+
+When no one is subscribed, the Gateway sends a message to the network, to tell the nodes that they need to stop sending data, therefore saving their battery life.
+
+The Gateway also subscribes to the  topic, in order to be warned when 
 
 \begin{figure}
   \includegraphics[width=\linewidth]{img/communication-2.jpg}
@@ -128,7 +139,7 @@ On one side, it receives data from the root node of the sensor network and trans
   \label{fig:communication1}
 \end{figure}
 
-\subsection{Wireless Mesh Network Configuration}
+\subsection{Wireless Sensor Network Configuration}
 
 \end{document}
 
