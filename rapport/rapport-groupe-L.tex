@@ -24,7 +24,7 @@
 \newpage
 
 \section{Introduction}
-When using sensors to measure data, such as light, temperature or noise, it is common to use IoT devices: a small battery-powered piece of hardware, equipped with one or several sensors, that can communicate data wirelessly.\\
+When using sensors to measure data, such as light, temperature or noise, it is common to use a IoT device: a small battery-powered piece of hardware, equipped with one or several sensors, that can communicate data wirelessly.\\
 
 The way to propagate information is by communicating with neighbouring devices, which will forward the information towards a specific node of the network, called the \textit{root node}. To be able to communicate in this manner, each device must form a relationship with the other nodes and form what is called a Wireless Mesh Network (WMN).\\
 
@@ -42,7 +42,7 @@ First, we need implement a custom routing protocol for sensor networks, similar 
 Lastly, the sensor data 
 \end{comment}
 \section{Overview of the System}
-The scope of this project covers three separate parts (see figure \ref{fig:architecture1}):
+The scope of this project covers three separate part (see figure \ref{fig:architecture1}):
 \begin{itemize}
 \item{An IoT sensor network, where devices organize themselves, and communicate with each other by using a custom routing protocol similar to RPL.}
 \item{A MQTT publish/subscribe infrastructure composed of a MQTT broker and several MQTT client that can either publish data and subscribe to topics to receive data.}
@@ -70,25 +70,40 @@ When a node disappears from the DODAG...
 \subsection{Sending Sensor Data}
 Periodically, each node uses a \textit{ROOT message} to send data to the root node of the DODAG, , which will then forward it to the Gateway, where it will be translated into a MQTT message that will be sent to the MQTT broker. Once it reaches the MQTT broker, the message is forwarded to all the MQTT client that have subscribed to the specific topic relative to that message.
 
-\subsection{Summary of Routing Message Types}
-\subsubsection{Discovery Message}
+\subsection{Sending Configuration Requests}
+We can send configuration requests through a MQTT publisher, that publishes on a "/config" topic, to which the Rime-MQTT Gateway is subscribed. The Gateway then translate that MQTT configuration message into a message that the sensor network can understand, by using
+
+
+\subsection{Packet Definitions}
+
+\subsection{Summary of Message Types}
+\subsubsection{Discovery Message: TAG-DISCOVERY}
 When a node has doesn't belong to the network, it will try sending a broadcast request for potential parent nodes to manifest themselves. This is called a \textit{Discovery message}.
 
-\subsubsection{Parent Message}
+\subsubsection{Parent Message: TAG-VADOR}
 A \textit{Parent Message} is sent by a member of the network after receiving a Discovery message. This message advertises the parent's address as well as rank within the network.
 
-\subsubsection{ACK-Parent}
+\subsubsection{ACK-Parent: TAG-ACK-PARENT}
 When a node which isn't part of the network receives a \textit{Parent message}, it can decide to set the sender of the \textit{Parent message} as its own parent.it then sends a unicast \textit{ACK-Parent message} to the parent, to inform it that it has a new child. After sending this \textit{ACK-Parent message}, the child node officially becomes part of the network.
 
-\subsubsection{Information Message}
+\subsubsection{Information Message: TAG-INFO}
 An \textit{information Message} is a message sent by a child to its parent.
 
-\subsubsection{ACK-Info Message}
+\subsubsection{ACK-Info Message: TAG-ACK-INFO}
 This message is a unicast message sent by a parent after receiving an \textit{Information Message} from one of its children. This serves as a confirmation that the message has been properly received.
 
 
-\subsubsection{Root Message}
+\subsubsection{Root Message: TAG-ROOT}
 Periodically, each node sends takes information from it's sensors and sends it to its parent. To do this, an \textit{Information message} is used.
+
+
+\subsubsection{UPDATE-MODE}
+\subsubsection{PERIODIC-MODE}
+\subsubsection{START-SEND}
+\subsubsection{STOP-SEND}
+
+
+
 
 
 \section{MQTT infrastructure}
