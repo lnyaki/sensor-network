@@ -105,8 +105,8 @@ msg_rcv->tag);
 
 		msg_2_snd[0] = TAG_VADOR; // sending node's information (rank, addr)
 		msg_2_snd[1] = node_rank;
-		msg_2_snd[2] = linkaddr_node_addr.u8[0];
-		msg_2_snd[3] = linkaddr_node_addr.u8[1];
+		msg_2_snd[2] = linkaddr_node_addr.u8[0]; // TODO pas besoin info déjà présente
+		msg_2_snd[3] = linkaddr_node_addr.u8[1]; // TODO remove
 		packetbuf_copyfrom(msg_2_snd,sizeof(msg_2_snd));
 		unicast_send(&unicast, from);
 		printf("DAD(%d.%d) RESPONSE to possible son %d.%d: '%d'\n",linkaddr_node_addr.u8[0],linkaddr_node_addr.u8[1], from->u8[0], from->u8[1], msg_2_snd[0]);
@@ -115,30 +115,28 @@ msg_rcv->tag);
 
 /* Function called when receiving a unicast message */
 static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
-
-
-  	//struct info_message *msg_rcv;
 		
 	uint8_t *ptr_data = packetbuf_dataptr();
 
 	printf("unicast message received from %d.%d with this beautiful tag: %d and rank: %d\n",
 	 from->u8[0], from->u8[1],ptr_data[0],ptr_data[1]);
 
-	struct node *vador = malloc(sizeof(struct node)); // TODO changer en inc_node_info
+	struct node *inc_node_info = malloc(sizeof(struct node));
 
 	switch(ptr_data[0]) {
 
 		case TAG_VADOR :
 			printf("Adding daddy to the list\n");
-			linkaddr_copy(&vador->addr,from);
-			//vador->addr.u8[0] = from->u8[0];
-			//vador->addr.u8[1] = from->u8[1];
-			vador->rank = ptr_data[1];
-//printf("vador addr : %x %d.%d", &vador->addr, vador->addr.u8[0], vador->addr.u8[1]);
-			list_add(vadors_list,vador);
+			linkaddr_copy(&inc_node_info->addr,from);
+			inc_node_info->rank = ptr_data[1];
+			list_add(vadors_list,inc_node_info);
 			break;
 		case TAG_ACK_PARENT:
 			printf("Adding son to the list\n");
+			linkaddr_copy(&inc_node_info->addr,from);
+			inc_node_info->rank = ptr_data[1];
+			list_add(lukes_list,inc_node_info);
+			break;
 	}
 	
 }
@@ -187,7 +185,7 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
 				}
 			}
 
-			// TODO free vadors
+			// TODO Comment free la liste ?
 
 			
 			/* Define its own rank regarding the father */
