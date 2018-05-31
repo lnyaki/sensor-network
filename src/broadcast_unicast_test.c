@@ -49,9 +49,13 @@
 
 /* TAG IDs */
 #define TAG_INFO 1
-#define TAG_DISCOVERY 2
-#define TAG_ACK_PARENT 3
+#define TAG_ACK_INFO 2
+#define TAG_DISCOVERY 3
 #define TAG_VADOR 4
+#define TAG_ACK_PARENT 5
+
+
+
 
 /* This are the messages structures */
 struct node{
@@ -64,18 +68,16 @@ struct simple_tag{
 	uint8_t tag;
 };
 
-
-
-
 /* Broadcast and unicast structures */
 static struct broadcast_conn broadcast;
 static struct unicast_conn unicast;
 
 /* Nodes variables */
-static uint8_t node_rank = -1 ;
+static uint8_t node_rank = 255;
 static struct node parent;
-
-static char has_parent = 0;
+static char has_parent = 0; // boolean for "has a parent"
+static char has_connection = 0; // boolean for "received ack from parent after ping"
+static char has_tried_connecting = 0; //  number of tries to reach parent
 
 LIST(lukes_list); // dynamic list of nodes (all lukes)
 LIST(vadors_list); // dynamic list of possible fathers
@@ -118,10 +120,11 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 		
 	uint8_t *ptr_data = packetbuf_dataptr();
 
-	printf("unicast message received from %d.%d with this beautiful tag: %d and rank: %d\n",
-	 from->u8[0], from->u8[1],ptr_data[0],ptr_data[1]);
+	printf("unicast message received from %d.%d with this beautiful tag: %d\n",
+	 from->u8[0], from->u8[1],ptr_data[0]);
 
 	struct node *inc_node_info = malloc(sizeof(struct node));
+	struct simple_tag pong;
 
 	switch(ptr_data[0]) {
 
@@ -136,6 +139,19 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 			linkaddr_copy(&inc_node_info->addr,from);
 			inc_node_info->rank = ptr_data[1];
 			list_add(lukes_list,inc_node_info);
+			break;
+		case TAG_INFO:
+			/* Ping from luke */
+			printf("Ping from the son\n");
+			pong.tag = TAG_ACK_INFO;
+			packetbuf_copyfrom(&pong,sizeof(struct simple_tag));
+			unicast_send(&unicast, from);
+			break;
+		case TAG_ACK_INFO:
+			/* Pong from parent */
+			printf("Pong from the parent\n");
+			has_tried_connecting = 0;
+			//has_connection = 1;
 			break;
 	}
 	
@@ -164,12 +180,12 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
 	while(1) {
 
 		/* Delay */
-		etimer_set(&et, CLOCK_SECOND * 8 + random_rand() % (CLOCK_SECOND * 4));
+		etimer_set(&et, CLOCK_SECOND * 10 + random_rand() % (CLOCK_SECOND * 4));
 
 		/* Check list of potential parents and make choice */
-		printf("Checking list of dads\n");
+		
 		if(list_head(vadors_list) != NULL && !has_parent){
-			printf("My current rank: %d\n", node_rank);
+			printf("My current rank: %d\n before chosing parent", node_rank);
 			//struct node *vador_list_ptr = list_head(vadors_list); // father's list pointer
 			uint8_t best_rank = -1;	
 			//printf("DEBUG: parent's address %x %d.%d\n", &vador_list_ptr->addr, vador_list_ptr->addr.u8[0],vador_list_ptr->addr.u8[1]);
@@ -194,6 +210,7 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
 			printf("My rank after daddy check: %d\n", node_rank);
 
 			has_parent = 1;
+			//has_connection = 1;
 			
 
 			/* Send ACK to father */
@@ -210,8 +227,8 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
 
 		
 		
-		if(has_parent == 0){ // no parent then rebroadcast
-			printf("No parent yet\n");
+		if(has_parent == 0){// || has_connection == 0){ // no parent or not connected anymore then rebroadcast
+			printf("No parent or no connection\n");
 			packetbuf_copyfrom(&dis,sizeof(struct simple_tag));
 			broadcast_send(&broadcast);
 			printf("Looking for a father %d\n",dis.tag);
@@ -242,15 +259,25 @@ PROCESS_THREAD(example_unicast_process, ev, data){
 
 	while(1) {
 		static struct etimer et;
-		linkaddr_t addr;
-		struct simple_tag dio;
-		struct node parent;
+		struct simple_tag ping;
 
 		etimer_set(&et, 100*CLOCK_SECOND);
 
 		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-
-		// SEND TEST PARENT MSG		
+		
+		if(has_parent && has_tried_connecting < 3){
+			printf("TRYING TO PING DADDY\n");
+			ping.tag = TAG_INFO;
+			packetbuf_copyfrom(&ping,sizeof(struct simple_tag));
+			unicast_send(&unicast, &parent.addr);
+			has_tried_connecting++;
+		}else if(has_tried_connecting >= 3){
+			/* New node situation */
+			has_tried_connecting = 0; 
+			//has_connection = 0; 
+			has_parent = 0;
+			node_rank = 255;
+		}		
 
 	}
 	PROCESS_END();

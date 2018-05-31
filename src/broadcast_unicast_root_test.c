@@ -49,9 +49,10 @@
 
 /* TAG IDs */
 #define TAG_INFO 1
-#define TAG_DISCOVERY 2
-#define TAG_ACK_PARENT 3
+#define TAG_ACK_INFO 2
+#define TAG_DISCOVERY 3
 #define TAG_VADOR 4
+#define TAG_ACK_PARENT 5
 
 /* This are the messages structures */
 struct node{
@@ -117,27 +118,36 @@ msg_rcv->tag);
 
 /* Function called when receiving a unicast message */
 static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
-
-
-  	//struct info_message *msg_rcv;
 		
 	uint8_t *ptr_data = packetbuf_dataptr();
 
-	printf("unicast message received from %d.%d with this beautiful tag: %d and rank: %d\n",
-	 from->u8[0], from->u8[1],ptr_data[0],ptr_data[1]);
+	printf("unicast message received from %d.%d with this beautiful tag: %d\n",
+	 from->u8[0], from->u8[1],ptr_data[0]);
 
-	struct node *vador = malloc(sizeof(struct node)); // TODO changer en inc_node_info
+	struct node *inc_node_info = malloc(sizeof(struct node));
+	struct simple_tag pong;
 
 	switch(ptr_data[0]) {
 
 		case TAG_VADOR :
 			printf("Adding daddy to the list\n");
-			linkaddr_copy(&vador->addr,from);
-			printf("DEBUG: parent's address %d.%d\n", vador->addr.u8[0],vador->addr.u8[1]);
-			vador->rank = ptr_data[1];
-			list_add(vadors_list,vador);
+			linkaddr_copy(&inc_node_info->addr,from);
+			inc_node_info->rank = ptr_data[1];
+			list_add(vadors_list,inc_node_info);
+			break;
+		case TAG_ACK_PARENT:
+			printf("Adding son to the list\n");
+			linkaddr_copy(&inc_node_info->addr,from);
+			inc_node_info->rank = ptr_data[1];
+			list_add(lukes_list,inc_node_info);
+			break;
+		case TAG_INFO:
+			pong.tag = TAG_ACK_INFO;
+			packetbuf_copyfrom(&pong,sizeof(struct simple_tag));
+			unicast_send(&unicast, from);
 			break;
 	}
+	
 }
 
 /*---------------------------------------------------------------------------*/
