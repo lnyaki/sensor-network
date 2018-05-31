@@ -53,6 +53,8 @@
 #define TAG_DISCOVERY 3
 #define TAG_VADOR 4
 #define TAG_ACK_PARENT 5
+#define TAG_ROOT 6
+#define TAG_ACK_ROOT 7
 
 
 
@@ -78,6 +80,7 @@ static struct node parent;
 static char has_parent = 0; // boolean for "has a parent"
 static char has_connection = 0; // boolean for "received ack from parent after ping"
 static char has_tried_connecting = 0; //  number of tries to reach parent
+static uint8_t buffer[8]; // Possible buffer for data_message not ackd
 
 LIST(lukes_list); // dynamic list of nodes (all lukes)
 LIST(vadors_list); // dynamic list of possible fathers
@@ -123,7 +126,7 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 	printf("unicast message received from %d.%d with this beautiful tag: %d\n",
 	 from->u8[0], from->u8[1],ptr_data[0]);
 
-	struct node *inc_node_info = malloc(sizeof(struct node));
+	struct node *inc_node_info = malloc(sizeof(struct node)); // TODO vu qu'on l'utilise pas tt le temps faudrait il pas le créé que ds certaines conditions ?
 	struct simple_tag pong;
 
 	switch(ptr_data[0]) {
@@ -153,6 +156,15 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 			has_tried_connecting = 0;
 			//has_connection = 1;
 			break;
+		case TAG_ROOT:
+			/* Data to send to root */
+			printf("Forwarding data to root\n");
+			if(has_parent){
+				packetbuf_copyfrom(ptr_data,packetbuf_datalen());
+				unicast_send(&unicast, &parent.addr);
+			}else{
+			// TODO ADD to BUFFER and try to send when parent found
+			}
 	}
 	
 }
@@ -201,7 +213,7 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
 				}
 			}
 
-			// TODO Comment free la liste ?
+			// TODO Parcourir la liste et free les vadors.
 
 			
 			/* Define its own rank regarding the father */
