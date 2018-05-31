@@ -120,6 +120,7 @@ static void broadcast_received(struct broadcast_conn *c, const linkaddr_t *from)
 		packetbuf_copyfrom(&msg_2_snd,sizeof(msg_2_snd));
 		unicast_send(&unicast, from);
 		printf("Unicast message sent to son: %d\n", msg_2_snd->tag);
+	}
 }
 
 /************************************************************************************
@@ -150,7 +151,7 @@ void broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
 void send_broadcast_message(struct broadcast_conn broadcast_connection,struct simple_tag message){
 	packetbuf_copyfrom(&message, sizeof(struct simple_tag));
     broadcast_send(&broadcast_connection);
-    printf("broadcast message sent %d\n",dis.tag);
+    printf("broadcast message sent %d\n",message.tag);
 }
 
 void send_unicast_message(){}
@@ -244,7 +245,7 @@ PROCESS_THREAD(broadcast_process, ev, data){
 
     	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-    	send_broadcast_message(broadcast_connection, message)
+    	send_broadcast_message(broadcast_connection, dis);
 	}
 
 	PROCESS_END();
@@ -261,10 +262,11 @@ PROCESS_THREAD(unicast_process, ev, data){
 
 	while(1) {
 		static struct etimer et;
+		/*
 		linkaddr_t addr;
 		struct simple_tag dio;
 		struct node parent;
-
+		*/
 		etimer_set(&et, 100*CLOCK_SECOND);
 
 		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
