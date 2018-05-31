@@ -23,13 +23,13 @@ AUTOSTART_PROCESSES(&sensor_code);
 static void unicast_received(struct unicast_conn *c, const linkaddr_t *sender)
 {
   printf("unicast message received from %d.%d\n",
-	 from->u8[0], from->u8[1]);
+	 sender->u8[0], sender->u8[1]);
 }
 
 static void broadcast_received(struct broadcast_conn *c, const linkaddr_t *sender)
 {
   printf("broadcast message received from %d.%d: '%s'\n",
-         from->u8[0], from->u8[1], (char *)packetbuf_dataptr());
+         sender->u8[0], sender->u8[1], (char *)packetbuf_dataptr());
 }
 
 /************************************************************************************
@@ -41,12 +41,12 @@ static void broadcast_received(struct broadcast_conn *c, const linkaddr_t *sende
 *                                 CALLBACKS
 *****************************************************************************/
 void unicast_sent(struct unicast_conn *c, int status, int num_tx){
-  const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
-  if(linkaddr_cmp(dest, &linkaddr_null)) {
+  const linkaddr_t *destination = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
+  if(linkaddr_cmp(destination, &linkaddr_null)) {
     return;
   }
   printf("unicast message sent to %d.%d: status %d num_tx %d\n",
-    dest->u8[0], dest->u8[1], status, num_tx);
+    destination->u8[0], destination->u8[1], status, num_tx);
 }
 
 void broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
