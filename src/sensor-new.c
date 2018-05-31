@@ -3,8 +3,6 @@
 #include <stdio.h>
 
 //Our own includes
-#include "messages/receiveMessage.h"
-#include "messages/sendMessage.h"
 //#include "sensor.h"
 
 /*---------------------------------------------------------------------------*/
