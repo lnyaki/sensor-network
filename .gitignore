@@ -10,3 +10,4 @@ src/contiki-native.a
 src/obj_native/*
 src/symbols.c
 src/symbols.h
+src/messages/*

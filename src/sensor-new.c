@@ -13,7 +13,76 @@
 PROCESS(sensor_code, "Sensor Communication Process");
 AUTOSTART_PROCESSES(&sensor_code);
 /*---------------------------------------------------------------------------*/
+/************************************************************************************
+///////////////                                                       ///////////////
+///////////////                  Messages Received                    ///////////////
+///////////////                                                       ///////////////
+************************************************************************************/
+/****************************************************************************
+*                                 CALLBACKS
+*****************************************************************************/
 
+static void unicast_received(struct unicast_conn *c, const linkaddr_t *sender)
+{
+  printf("unicast message received from %d.%d\n",
+	 from->u8[0], from->u8[1]);
+}
+
+static void broadcast_received(struct broadcast_conn *c, const linkaddr_t *sender)
+{
+  printf("broadcast message received from %d.%d: '%s'\n",
+         from->u8[0], from->u8[1], (char *)packetbuf_dataptr());
+}
+
+/************************************************************************************
+///////////////                                                       ///////////////
+///////////////                  Messages to send                     ///////////////
+///////////////                                                       ///////////////
+************************************************************************************/
+/****************************************************************************
+*                                 CALLBACKS
+*****************************************************************************/
+int unicast_sent(struct unicast_conn *c, int status, int num_tx){
+  const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
+  if(linkaddr_cmp(dest, &linkaddr_null)) {
+    return;
+  }
+  printf("unicast message sent to %d.%d: status %d num_tx %d\n",
+    dest->u8[0], dest->u8[1], status, num_tx);
+}
+
+int broadcast_sent(struct broadcast_conn *c, int status, int num_tx){
+
+}
+
+
+/****************************************************************************
+*                                BROADCAST FUNCTIONS
+*****************************************************************************/
+int send_broadcast_message(struct broadcast_conn broadcast_connection,char[50] message){
+	packetbuf_copyfrom(message, strlen(message));
+    broadcast_send(&broadcast_connection);
+    printf("broadcast message sent\n");
+}
+
+int send_unicast_message(){}
+
+int sendHelloMessage(){}
+
+int sendDiscoveryMessage(){}
+
+int sendNodeInformationMessage(){}
+
+int sendDataMessage(){}
+
+int sendACK(){}
+
+
+/************************************************************************************
+///////////////                                                       ///////////////
+///////////////                  sensor.c                             ///////////////
+///////////////                                                       ///////////////
+************************************************************************************/
 
 
 /****************************************************************************
