@@ -7,10 +7,11 @@
 \usepackage{listings}
 \usepackage{color}
 \usepackage{url}
+\usepackage{verbatim}
 \usepackage[top=3cm,bottom=3cm,left=3cm,right=3cm]{geometry}
 
 \title{Master in Cyber-Security\\
-	Course ID --- Mobile and Embedded Computing: \\
+	LINGI2146 --- Mobile and Embedded Computing: \\
 	Publishing IoT Sensor Data through a MQTT publish/subscribe infrastructure}
 
 \author{FONTAINE Romain, NYAKI Loïc, TIO NOGUERAS Gérard}
@@ -23,11 +24,23 @@
 \newpage
 
 \section{Introduction}
-The goal of this project is to create a sensor network, with a custom routing protocol, that is able to publish the data from its sensors by using the MQTT message protocol.\\
+When using sensors to measure data, such as light, temperature or noise, it is common to use a IoT device : a small battery-powered piece of hardware, equipped with one or several sensors, that can communicate data wirelessly.\\
 
+The way to propagate information is by communicating with neighbouring devices, which will forward the information towards a specific device, called a root node. To be able to communicate in this manner, each device must form a relationship with the other nodes and form what is called a Wireless Mesh Network (WMN).\\
+
+Another part of this system is the MQTT infrastructure. MQTT (Message Queuing Telemetry Transport) is a publish/subscribe messaging protocol that allows publishers to publish data to a MQTT broker, while clients can subscribe to that same broker, to receive specific information from the publishers.\\
+
+The first goal of this project is to implement a custom routing protocol, similar to RPL,  that will allow the creation of a network of IoT devices. Information should be able to go from any node of the network, to the root node, which acts as a gateway towards the outside world. \\
+
+The second goal is to create an MQTT infrastructure, that can allow clients to subscribe to a MQTT broker, and publishers to publish data to the broker.\\
+
+The third and last goal is then to create a gateway agent that will serve as an interface between the IoT network and the MQTT infrastructure, in such a way that the IoT devices should be able to become MQTT publishers, and any client from outside the IoT network should be able to subscribe to the MQTT broker, and be periodically updated with data from the IoT network sensors.
+
+\begin{comment}
 First, we need implement a custom routing protocol for sensor networks, similar to RPL, on top of 6LoWPAN which is a special version of IPv6 for low-power devices. Then, we build a messaging infrastructure using MQTT, which is a publish/subscribe messaging protocol. Lastly, we interface the sensor network with the MQTT message infrastructure, by using a border router, whose job will be to translate the message travelling between the sensor network and the MQTT message infrastructure.
 \\
 Lastly, the sensor data 
+\end{comment}
 \section{Architecture}
 
 \section{Routing Protocol}
