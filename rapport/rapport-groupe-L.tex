@@ -69,12 +69,25 @@ When a node that is already part
 MQTT stands for Message Queuing Telemetry Transport, and is a publish/subscribe protocol. It requires a MQTT broker as well as MQTT clients that can publish information to the broker, as topics, or subscribe to the broker for a specific topic, in order to be given the required information through time.
 
 \subsection{MQTT Broker}
-The broker is the central element of MQTT. It is where each MQTT client either subscribe to a topic, or publishes information under a specific topic. In this instance, we used Mosquitto, an open-source MQTT broker.
+The broker is the central element of MQTT. It is where each MQTT client either subscribe to a topic, or publishes information under a specific topic. In this instance, we used Mosquitto, an open-source MQTT broker.\\
+
+In our case, the MQTT broker will be running on a regular laptop.
 
 \subsection{MQTT Publishers}
+
 \subsection{MQTT Subscribers}
+\subsection{Regular MQTT clients}
+For demonstration purpose, one or several clients will run on our machine, and subscribe to specific topics, to receive information from the sensor network. Once subscribed to the appropriate topic, each subscriber will receive periodical information from the network.
+
+\subsection{Rime-MQTT Gateway as a client}
+In order to implement the possibility of modifying the IoT network configuration dynamically, we need the Rime-MQTT Gateway to subscribe to a "configuration" topic to the MQTT broker. A specific client will then, when necessary publish configuration commands that will be forwarded to the Gateway.
+
 
 \section{Rime-MQTT Gateway}
+The Rime-MQTT Gateway is a python program, that serves as an interface between the sensor network and the MQTT broker.\\
+
+On one side, it receives data from the root node of the sensor network and translates them into MQTT publish messages that it sends to the MQTT broker. On the other side, it subscribes to the MQTT broker for configurations messages that it then translate into a format that the root of the sensor node understands.
+
 \subsection{Wireless Mesh Network Configuration}
 
 \end{document}
