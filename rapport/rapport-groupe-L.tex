@@ -60,12 +60,17 @@ One of the objectives of this project is the implementation of a routing protoco
 Any given node that isn't part of the network should have the posibility to become one, and start publishing information. Any node of the network should also be able to disappear without compromising the integrity of the network as long as the node is not a critical junction of two parts of the network graph.
 
 \subsection{Joining a graph}
+\label{sec: joining-graph}
 When an IoT device is started, it needs to find a network to join. It will therefore use a \textit{Discovery message} to broadcast its existence, ask around for some information about the DODAG, and wait for the response. This \textit{Discovery message} will be send periodically based on a timer.\\
 
-When a node that is already a member of the DODAG receives this broadcasted message, it replies with a unicast \textit{Parent Message}, advertising itself as a possible parent. When the node that is trying to join the network receives a \textit{Parent Message}, it saves the address of the parent and sends a unicast \textit{Parent-ACK message} to the parent, to confirm their child-parent relationship. The parent then adds the child to the list of its children.
+When a node that is already a member of the DODAG receives this broadcasted message, it replies with a unicast \textit{Parent Message}, advertising itself as a possible parent. When the node that is trying to join the network receives a \textit{Parent Message}, it saves the address of the parent and sends a unicast \textit{Parent-ACK message} to the parent, to confirm their child-parent relationship. The parent then adds the child to the list of its children.\\
 
-\subsection{Leaving a graph TODO}
-When a node disappears from the DODAG...
+When getting a new parent, the child node also inherits the configuration of the parent, and is therefore up-to-date with the rest of the DODAG, regarding configuration.
+
+\subsection{Leaving a Graph}
+Nodes that are in a parent-child relationship maintain an awareness to each other. The child periodically sends an \textit{Information Messages} to its parent. The parent then responds with an \textit{Information-Acknowledgement Message}.\\
+
+If the child hasn't heard from its parent before a specific timer runs out, it will send three more \textit{Information Messages}. If the three messages don't receive a response, the parent is considered missing, and the child start looking for a new parent, by broadcasting a \textit{Discovery Message} (see section \ref{sec: joining-graph} about joining a graph).
 
 \subsection{Sending Sensor Data}
 Periodically, each node uses a \textit{ROOT message} to send data to the root node of the DODAG, , which will then forward it to the Gateway, where it will be translated into a MQTT message that will be sent to the MQTT broker. Once it reaches the MQTT broker, the message is forwarded to all the MQTT client that have subscribed to the specific topic relative to that message.
@@ -107,7 +112,7 @@ Periodically, each node sends takes information from it's sensors and sends it t
 
 
 \section{MQTT infrastructure}
-MQTT stands for Message Queuing Telemetry Transport, and is a publish/subscribe protocol. It requires a MQTT broker as well as MQTT clients that can publish information to the broker, as topics, or subscribe to the broker for a specific topic, in order to be given the required information through time.
+MQTT stands for Message Queuing Telemetry Transport, and is a publish/subscribe protocol. It requires a MQTT broker as well as MQTT clients that can publish information to the broker, as topics, or subscribe to the broker for a specific topic, in order to be updated everytime there is new information on that topic.
 
 \subsection{MQTT Broker}
 The broker is the central element of MQTT. It is where each MQTT client either subscribe to a topic, or publishes information under a specific topic. In this instance, we used Mosquitto, an open-source MQTT broker.\\
