@@ -22,6 +22,10 @@ static struct etimer et_temp;
 static struct etimer et_accel;
 static struct etimer et_battery;
 
+#define TAG_TEMP 'T'
+#define TAG_BATTERY 'B'
+#define TAG_ACCEL 'Z'
+
 #define ASK_CONFIG 'A'
 #define TEMP 'T'
 #define ACCEL 'Z'
@@ -121,6 +125,9 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 	struct node *inc_node_info = malloc(sizeof(struct node));
 	struct simple_tag pong;
 
+	uint16_t battery, temp, x, y, z;
+    	float mv;
+
 	switch(ptr_data[0]) {
 		case TAG_ACK_PARENT:
 			printf("Adding son to the list\n");
@@ -134,7 +141,25 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 			unicast_send(&unicast, from);
 			break;
 		case TAG_ROOT:
-			// TODO What do we do with the sensor data ?
+			switch(ptr_data[1]){
+				case TAG_BATTERY:
+				    battery = (ptr_data[2] << 8) | ptr_data[3];
+				    mv = (battery * 2.500 * 2) / 4096;
+				    printf("%c %ld.%03d", TAG_BATTERY, (long) mv,
+					    (unsigned) ((mv - floor(mv)) * 1000));
+				    break;
+				case TAG_TEMP:
+				    temp = (ptr_data[2] << 8) | ptr_data[3];
+				    printf("%c %d", TAG_TEMP, temp);
+				    break;
+				case TAG_ACCEL:
+				    x = (ptr_data[2] << 8) | ptr_data[3];
+				    y = (ptr_data[4] << 8) | ptr_data[5];
+				    z = (ptr_data[6] << 8) | ptr_data[7];
+				    printf("%c %d %d %d\n", TAG_ACCEL, x, y, z);
+				    break;
+			}
+		
 	}
 	
 }
