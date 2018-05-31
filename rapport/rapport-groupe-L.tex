@@ -45,9 +45,9 @@ Lastly, the sensor data
 The scope of this project covers 
 
 \begin{figure}
-  \includegraphics[width=\linewidth]{img/network-diagram-1.jpg}
+  \includegraphics[width=\linewidth]{img/architecture-1.jpg}
   \caption{An overview of the system.}
-  \label{fig:network1}
+  \label{fig:architecture1}
 \end{figure}
 \section{DODAG and Routing Protocol}
 One of the objectives of this project is the implementation of a routing protocol, similar to RPL (Routing Protocol for Low-Power and Lossy Networks). A routing protocol is needed in order create a Destination Oriented Directed Acyclic Graph (DODAG), and have the information propagate properly from any individual node to the root node of the network.\\
@@ -73,6 +73,7 @@ The broker is the central element of MQTT. It is where each MQTT client either s
 
 In our case, the MQTT broker will be running on a regular laptop.
 
+
 \subsection{MQTT Publishers}
 
 \subsection{MQTT Subscribers}
@@ -87,6 +88,12 @@ In order to implement the possibility of modifying the IoT network configuration
 The Rime-MQTT Gateway is a python program, that serves as an interface between the sensor network and the MQTT broker.\\
 
 On one side, it receives data from the root node of the sensor network and translates them into MQTT publish messages that it sends to the MQTT broker. On the other side, it subscribes to the MQTT broker for configurations messages that it then translate into a format that the root of the sensor node understands.
+
+\begin{figure}
+  \includegraphics[width=\linewidth]{img/communication-1.jpg}
+  \caption{This schema shows how data transits through the Rime-MQTT Gateway.}
+  \label{fig:communication1}
+\end{figure}
 
 \subsection{Wireless Mesh Network Configuration}
 
