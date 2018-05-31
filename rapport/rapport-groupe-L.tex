@@ -24,17 +24,17 @@
 \newpage
 
 \section{Introduction}
-When using sensors to measure data, such as light, temperature or noise, it is common to use a IoT device : a small battery-powered piece of hardware, equipped with one or several sensors, that can communicate data wirelessly.\\
+When using sensors to measure data, such as light, temperature or noise, it is common to use a IoT device: a small battery-powered piece of hardware, equipped with one or several sensors, that can communicate data wirelessly.\\
 
-The way to propagate information is by communicating with neighbouring devices, which will forward the information towards a specific device, called a root node. To be able to communicate in this manner, each device must form a relationship with the other nodes and form what is called a Wireless Mesh Network (WMN).\\
+The way to propagate information is by communicating with neighbouring devices, which will forward the information towards a specific node of the network, called the \textit{root node}. To be able to communicate in this manner, each device must form a relationship with the other nodes and form what is called a Wireless Mesh Network (WMN).\\
 
 Another part of this system is the MQTT infrastructure. MQTT (Message Queuing Telemetry Transport) is a publish/subscribe messaging protocol that allows publishers to publish data to a MQTT broker, while clients can subscribe to that same broker, to receive specific information from the publishers.\\
 
-The first goal of this project is to implement a custom routing protocol, similar to RPL,  that will allow the creation of a network of IoT devices. Information should be able to go from any node of the network, to the root node, which acts as a gateway towards the outside world. \\
+The first goal of this project is to implement a custom routing protocol, similar to RPL,  that will allow the creation of a network of IoT devices called  Destination Oriented Directed Acyclic Graph, or DODAG for short. Information should be able to travel from any node of the network, to the root node, which acts as a gateway towards the outside world. \\
 
-The second goal is to create an MQTT infrastructure, that can allow clients to subscribe to a MQTT broker, and publishers to publish data to the broker.\\
+The second goal is to create an MQTT infrastructure, that allow clients to subscribe to a MQTT broker, and publishers to publish data to the broker.\\
 
-The third and last goal is then to create a gateway agent that will serve as an interface between the IoT network and the MQTT infrastructure, in such a way that the IoT devices should be able to become MQTT publishers, and any client from outside the IoT network should be able to subscribe to the MQTT broker, and be periodically updated with data from the IoT network sensors.
+The third and last goal is then to create a \textit{Gateway agent} that will serve as an interface between the IoT network and the MQTT infrastructure, in such a way that the IoT devices should be able to become MQTT publishers, and any client from outside the IoT network should be able to subscribe to the MQTT broker, and be periodically updated with data from the IoT network sensors.
 
 \begin{comment}
 First, we need implement a custom routing protocol for sensor networks, similar to RPL, on top of 6LoWPAN which is a special version of IPv6 for low-power devices. Then, we build a messaging infrastructure using MQTT, which is a publish/subscribe messaging protocol. Lastly, we interface the sensor network with the MQTT message infrastructure, by using a border router, whose job will be to translate the message travelling between the sensor network and the MQTT message infrastructure.
@@ -60,24 +60,25 @@ One of the objectives of this project is the implementation of a routing protoco
 Any given node that isn't part of the network should have a way to become a member of the network, and start publishing information. Any node of the network should also be able to disappear without compromising the integrity of the network as long as the node is not a critical junction of two parts of the network graph.
 
 \subsection{Joining a graph}
-When an IoT device is started, it needs to find a network to join. It will therefore broadcast a message asking around for some information about the graph, and wait for the response. This message will be send periodically.\\
+When an IoT device is started, it needs to find a network to join. It will therefore use a \textit{Discovery message} to broadcast its existence, ask around for some information about the DODAG, and wait for the response. This \textit{Discovery message} will be send periodically.\\
 
 When a node that is already part
 
 \subsection{Leaving a graph}
+When a node disappears from the DODAG...
 
 
-\subsection{Routing Message Types}
-\subsubsection{Discovery}
+\subsection{Summary of Routing Message Types}
+\subsubsection{Discovery Message}
 When a node has doesn't belong to the network, it will try sending a broadcast request for potential parent nodes to manifest themselves. This is called a \textit{Discovery message}.
 
-\subsubsection{Parent}
+\subsubsection{Parent Message}
 A \textit{Parent Message} is sent by a member of the network after receiving a Discovery message. This message advertises the parent's address as well as rank within the network.
 
-\subsubsection{ACK}
+\subsubsection{ACK Message}
 When a node who isn't part of the network receives a \textit{Parent message}, it can decide to set the sender of the \textit{Parent message} as its own parent. When the child node decides to add a parent, it sends unicast \textit{ACK message} to the parent, to inform it that it has a new child. Afterwards, the child node is officially part of the network.
 
-\subsubsection{Information message}
+\subsubsection{Information Message}
 Periodically, each node sends takes information from it's sensors and sends it to its parent. To do this, an \textit{Information message} is used.
 
 
