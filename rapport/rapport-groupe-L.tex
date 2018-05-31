@@ -42,10 +42,15 @@ First, we need implement a custom routing protocol for sensor networks, similar 
 Lastly, the sensor data 
 \end{comment}
 \section{System Architecture}
-The scope of this project covers 
+The scope of this project covers three separate part :
+\begin{itemize}
+\item{A IoT sensor network}
+\item{A MQTT publish/subscribe infrastructure}
+\item{A Rime-MQTT Gateway which interfaces the sensor network with the MQTT infrastructure}
+\end{itemize}
 
 \begin{figure}
-  \includegraphics[width=\linewidth]{img/architecture-1.jpg}
+  \includegraphics[width=\linewidth]{img/architecture-2.jpg}
   \caption{An overview of the system.}
   \label{fig:architecture1}
 \end{figure}
@@ -118,7 +123,7 @@ The Rime-MQTT Gateway is a python program, that serves as an interface between t
 On one side, it receives data from the root node of the sensor network and translates them into MQTT publish messages that it sends to the MQTT broker. On the other side, it subscribes to the MQTT broker for configurations messages that it then translate into a format that the root of the sensor node understands.
 
 \begin{figure}
-  \includegraphics[width=\linewidth]{img/communication-1.jpg}
+  \includegraphics[width=\linewidth]{img/communication-2.jpg}
   \caption{This schema shows how data transits through the Rime-MQTT Gateway.}
   \label{fig:communication1}
 \end{figure}
