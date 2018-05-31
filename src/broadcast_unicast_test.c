@@ -54,7 +54,7 @@
 #define TAG_VADOR 4
 #define TAG_ACK_PARENT 5
 #define TAG_ROOT 6
-#define TAG_ACK_ROOT 7
+// #define TAG_ACK_ROOT 7 TODO Pas sur si nécessaire
 
 
 
@@ -198,22 +198,22 @@ PROCESS_THREAD(example_broadcast_process, ev, data){
 		
 		if(list_head(vadors_list) != NULL && !has_parent){
 			printf("My current rank: %d\n before chosing parent", node_rank);
-			//struct node *vador_list_ptr = list_head(vadors_list); // father's list pointer
-			uint8_t best_rank = -1;	
-			//printf("DEBUG: parent's address %x %d.%d\n", &vador_list_ptr->addr, vador_list_ptr->addr.u8[0],vador_list_ptr->addr.u8[1]);
+			uint8_t best_rank = 255;	
 			struct node *i;
 			for(i = list_head(vadors_list); i != NULL; i = list_item_next(i)){
 				printf("current proposition rank: %d\n",i->rank);
 				if(i->rank < best_rank && i->rank < node_rank){
 					best_rank = i->rank;
 					linkaddr_copy(&parent.addr,&i->addr);
-					//parent.addr = i->addr;
-					//printf("DEBUG: parent's address %d.%d\n", parent.addr.u8[0],parent.addr.u8[1]);
 					parent.rank = best_rank;
 				}
 			}
 
-			// TODO Parcourir la liste et free les vadors.
+			/* Free the memory and the list */	
+			struct node *j;
+			for(j = list_head(vadors_list); j != NULL; j = list_item_next(i)){
+				free(list_pop(vadors_list));	
+			}
 
 			
 			/* Define its own rank regarding the father */
@@ -285,6 +285,7 @@ PROCESS_THREAD(example_unicast_process, ev, data){
 			has_tried_connecting++;
 		}else if(has_tried_connecting >= 3){
 			/* New node situation */
+			printf("RESET, PARENT LOST\n");
 			has_tried_connecting = 0; 
 			//has_connection = 0; 
 			has_parent = 0;
