@@ -58,6 +58,7 @@ Any given node that isn't part of the network should have a way to become a memb
 When an IoT device is started, it needs to find a network to join. It will therefore broadcast a message asking around for some information about the graph, and wait for the response. This message will be send periodically.\\
 
 When a node that is already part
+
 \subsection{Leaving a graph}
 
 \subsection{Routing Message Types}
@@ -66,7 +67,10 @@ When a node that is already part
 
 \section{MQTT infrastructure}
 MQTT stands for Message Queuing Telemetry Transport, and is a publish/subscribe protocol. It requires a MQTT broker as well as MQTT clients that can publish information to the broker, as topics, or subscribe to the broker for a specific topic, in order to be given the required information through time.
+
 \subsection{MQTT Broker}
+The broker is the central element of MQTT. It is where each MQTT client either subscribe to a topic, or publishes information under a specific topic. In this instance, we used Mosquitto, an open-source MQTT broker.
+
 \subsection{MQTT Publishers}
 \subsection{MQTT Subscribers}
 
