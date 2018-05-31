@@ -207,14 +207,7 @@ void process_event(int ev, char* data){
 
 }
 
-//The function that is executed when the timer runs out
-void periodic_processing(struct broadcast_conn broadcast,char* data){
-	
-	//Defined in messageSent.h.
-    //send_broadcast_message(&broadcast, data);
-    
 
-}
 /*-------------------------------------------------------------------------*/
 /****************************************************************************
 *                               PROCESS THREAD
