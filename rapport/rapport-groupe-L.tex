@@ -24,7 +24,7 @@
 \newpage
 
 \section{Introduction}
-When using sensors to measure data, such as light, temperature or noise, it is common to use IoT devices: a small battery-powered piece of hardware, equipped with one or several sensors, that can communicate data wirelessly.\\
+When using sensors to measure data, such as light, temperature or noise, it is common to use a IoT device: a small battery-powered piece of hardware, equipped with one or several sensors, that can communicate data wirelessly.\\
 
 The way to propagate information is by communicating with neighbouring devices, which will forward the information towards a specific node of the network, called the \textit{root node}. To be able to communicate in this manner, each device must form a relationship with the other nodes and form what is called a Wireless Mesh Network (WMN).\\
 
@@ -42,7 +42,7 @@ First, we need implement a custom routing protocol for sensor networks, similar 
 Lastly, the sensor data 
 \end{comment}
 \section{Overview of the System}
-The scope of this project covers three separate parts (see figure \ref{fig:architecture1}):
+The scope of this project covers three separate part (see figure \ref{fig:architecture1}):
 \begin{itemize}
 \item{An IoT sensor network, where devices organize themselves, and communicate with each other by using a custom routing protocol similar to RPL.}
 \item{A MQTT publish/subscribe infrastructure composed of a MQTT broker and several MQTT client that can either publish data and subscribe to topics to receive data.}
@@ -60,39 +60,57 @@ One of the objectives of this project is the implementation of a routing protoco
 Any given node that isn't part of the network should have the posibility to become one, and start publishing information. Any node of the network should also be able to disappear without compromising the integrity of the network as long as the node is not a critical junction of two parts of the network graph.
 
 \subsection{Joining a graph}
+\label{sec: joining-graph}
 When an IoT device is started, it needs to find a network to join. It will therefore use a \textit{Discovery message} to broadcast its existence, ask around for some information about the DODAG, and wait for the response. This \textit{Discovery message} will be send periodically based on a timer.\\
 
-When a node that is already a member of the DODAG receives this broadcasted message, it replies with a unicast \textit{Parent Message}, advertising itself as a possible parent. When the node that is trying to join the network receives a \textit{Parent Message}, it saves the address of the parent and sends a unicast \textit{Parent-ACK message} to the parent, to confirm their child-parent relationship. The parent then adds the child to the list of its children.
+When a node that is already a member of the DODAG receives this broadcasted message, it replies with a unicast \textit{Parent Message}, advertising itself as a possible parent. When the node that is trying to join the network receives a \textit{Parent Message}, it saves the address of the parent and sends a unicast \textit{Parent-ACK message} to the parent, to confirm their child-parent relationship. The parent then adds the child to the list of its children.\\
 
-\subsection{Leaving a graph TODO}
-When a node disappears from the DODAG...
+When getting a new parent, the child node also inherits the configuration of the parent, and is therefore up-to-date with the rest of the DODAG, regarding configuration.
+
+\subsection{Leaving a Graph}
+Nodes that are in a parent-child relationship maintain an awareness to each other. The child periodically sends an \textit{Information Messages} to its parent. The parent then responds with an \textit{Information-Acknowledgement Message}.\\
+
+If the child hasn't heard from its parent before a specific timer runs out, it will send three more \textit{Information Messages}. If the three messages don't receive a response, the parent is considered missing, and the child start looking for a new parent, by broadcasting a \textit{Discovery Message} (see section \ref{sec: joining-graph} about joining a graph).
 
 \subsection{Sending Sensor Data}
-Periodically, each node uses a \textit{ROOT message} to send data to the root node of the DODAG, , which will then forward it to the Gateway, where it will be translated into a MQTT message that will be sent to the MQTT broker. Once it reaches the MQTT broker, the message is forwarded to all the MQTT client that have subscribed to the specific topic relative to that message.
+Periodically, each node uses a \textit{ROOT message} to send data to the root node of the DODAG, which will then forward it to the Gateway, where it will be translated into a MQTT message that will be sent to the MQTT broker. Once it reaches the MQTT broker, the message is forwarded to all the MQTT client that have subscribed to the specific topic relative to that message.
 
-\subsection{Summary of Routing Message Types}
-\subsubsection{Discovery Message}
+\subsection{Sending Configuration Requests}
+We can send configuration requests through a MQTT publisher, that publishes on a "/config" topic, to which the Rime-MQTT Gateway is subscribed. The Gateway then translate that MQTT configuration message into a message that the sensor network can understand, by using TODO
+
+
+\subsection{Summary of Message Types}
+\subsubsection{TAG-DISCOVERY: Discovery Message}
 When a node has doesn't belong to the network, it will try sending a broadcast request for potential parent nodes to manifest themselves. This is called a \textit{Discovery message}.
 
-\subsubsection{Parent Message}
+\subsubsection{TAG-VADOR: Parent Message}
 A \textit{Parent Message} is sent by a member of the network after receiving a Discovery message. This message advertises the parent's address as well as rank within the network.
 
-\subsubsection{ACK-Parent}
+\subsubsection{TAG-ACK-PARENT: Acknowledgement of Parent message}
 When a node which isn't part of the network receives a \textit{Parent message}, it can decide to set the sender of the \textit{Parent message} as its own parent.it then sends a unicast \textit{ACK-Parent message} to the parent, to inform it that it has a new child. After sending this \textit{ACK-Parent message}, the child node officially becomes part of the network.
 
-\subsubsection{Information Message}
+\subsubsection{TAG-INFO: Information Message}
 An \textit{information Message} is a message sent by a child to its parent.
 
-\subsubsection{ACK-Info Message}
+\subsubsection{TAG-ACK-INFO: Acknowledgment of Information message}
 This message is a unicast message sent by a parent after receiving an \textit{Information Message} from one of its children. This serves as a confirmation that the message has been properly received.
 
 
-\subsubsection{Root Message}
+\subsubsection{TAG-ROOT: Messages destined to the root node}
 Periodically, each node sends takes information from it's sensors and sends it to its parent. To do this, an \textit{Information message} is used.
 
 
+\subsubsection{UPDATE-MODE: }
+\subsubsection{PERIODIC-MODE: }
+\subsubsection{START-SEND:}
+\subsubsection{STOP-SEND:}
+
+
+
+
+
 \section{MQTT infrastructure}
-MQTT stands for Message Queuing Telemetry Transport, and is a publish/subscribe protocol. It requires a MQTT broker as well as MQTT clients that can publish information to the broker, as topics, or subscribe to the broker for a specific topic, in order to be given the required information through time.
+MQTT stands for Message Queuing Telemetry Transport, and is a publish/subscribe protocol. It requires a MQTT broker as well as MQTT clients that can publish information to the broker, as topics, or subscribe to the broker for a specific topic, in order to be updated everytime there is new information on that topic.
 
 \subsection{MQTT Broker}
 The broker is the central element of MQTT. It is where each MQTT client either subscribe to a topic, or publishes information under a specific topic. In this instance, we used Mosquitto, an open-source MQTT broker.\\
