@@ -1,10 +1,6 @@
 #include <stdio.h>
 #include "contiki.h"
 #include "lib/sensors.h"
-#include "dev/i2cmaster.h"
-#include "dev/tmp102.h"
-#include "dev/adxl345.h"
-#include "dev/battery-sensor.h"
 #include "dev/serial-line.h"
 
 #include "net/rime/rime.h" // TODO probably needed
@@ -42,6 +38,11 @@ static struct etimer et_battery;
 #define TAG_VADOR 4
 #define TAG_ACK_PARENT 5
 #define TAG_ROOT 6
+
+#define TAG_UPDATE_MODE 8
+#define TAG_PERIODIC_MODE 9
+#define TAG_START_SEND 10
+#define TAG_STOP_SEND 11
 
 static char periodic_mode = 1;
 static char has_subscribers = 0;
@@ -205,19 +206,19 @@ PROCESS_THREAD(test_serial, ev, data)
             switch(((char *)data)[0]){
 		case UPDATE_MODE:
 			periodic_mode = 0;
-			propagate(UPDATE_MODE);
+			propagate(TAG_UPDATE_MODE);
 			break;
 		case PERIODIC_MODE:
 			periodic_mode = 1;
-			propagate(PERIODIC_MODE);
+			propagate(TAG_PERIODIC_MODE);
 			break;
 		case START_SEND:
 			has_subscribers = 1;
-			propagate(START_SEND);
+			propagate(TAG_START_SEND);
 			break;
 		case STOP_SEND:
 			has_subscribers = 0;
-			propagate(STOP_SEND);
+			propagate(TAG_STOP_SEND);
 			break;
             }
         }
