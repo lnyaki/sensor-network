@@ -171,6 +171,17 @@ PROCESS_THREAD(ask_config, ev, data){
     PROCESS_END();
 }
 
+/*---------------------------------------------------------------------------*/
+
+static void propagate(uint8_t config_tag){ // TODO find the right arguments for this fct to work
+	if(list_head(lukes_list) != NULL){
+		struct node *i;
+		for(i = list_head(lukes_list); i != NULL; i = list_item_next(i)){
+			packetbuf_copyfrom(&config_tag,sizeof(uint8_t));
+			unicast_send(&unicast, &i->addr);
+		}
+	}
+}
 
 /*---------------------------------------------------------------------------*/
 
@@ -192,18 +203,22 @@ PROCESS_THREAD(test_serial, ev, data)
         PROCESS_YIELD();
         if(ev == serial_line_event_message) {
             switch(((char *)data)[0]){
-                case UPDATE_MODE:
-                    periodic_mode = 0;
-                    break;
-                case PERIODIC_MODE:
-                    periodic_mode = 1;
-                    break;
-                case START_SEND:
-                    has_subscribers = 1;
-                    break;
-                case STOP_SEND:
-                    has_subscribers = 0;
-                    break;
+		case UPDATE_MODE:
+			periodic_mode = 0;
+			propagate(UPDATE_MODE);
+			break;
+		case PERIODIC_MODE:
+			periodic_mode = 1;
+			propagate(PERIODIC_MODE);
+			break;
+		case START_SEND:
+			has_subscribers = 1;
+			propagate(START_SEND);
+			break;
+		case STOP_SEND:
+			has_subscribers = 0;
+			propagate(STOP_SEND);
+			break;
             }
         }
     }
