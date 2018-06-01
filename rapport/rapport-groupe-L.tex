@@ -101,13 +101,23 @@ This is a pong back to the child's ping. This serves as a confirmation that the 
 Periodically, each node sends takes information from it's sensors and sends it to its parent. To do this, an \textit{Information message} is used.
 
 
-\subsubsection{UPDATE-MODE: }
-\subsubsection{PERIODIC-MODE: }
-\subsubsection{START-SEND:}
+\subsubsection{UPDATE-MODE: Sending sensor data based on changes}
+The node will monitor its sensors and send data only when they change from the previous one.
+
+\subsubsection{PERIODIC-MODE: Sending sensor data perodically}
+Based on a time, that can be defined we send the actual value of the sensor.
+
+\subsubsection{START-SEND: Activate the network}
+After stopping the machines from sending, if a subscriber connects back then the network wakes up and the nodes start sending their data again.
+
 \subsubsection{STOP-SEND:}
+To optimize the power consumption of our nodes, we have a message that propagates the order to stop sending the sensor data.
 
 
 \subsection{Root Node}
+The root node will be the center piece of all the interactions.  It is build very similarly then the nodes axcepts for everything regarding parents.
+It is the only node with no parent and a starting rank of 0. The main difference with the other nodes is its capability to start the propagation of new configurations.
+It receives serial events and that triggers the recursive unicasting to all the children. It also is different in the way it handles the reception of sensor data because he hasn't got any parent to forward it to. Well, that isn't totally true, it will print the data received in a specific format which is the equivalent of a serial input for the gateway.
 
 
 \section{MQTT infrastructure}
