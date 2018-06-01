@@ -106,16 +106,14 @@ Periodically, each node sends takes information from it's sensors and sends it t
 \subsubsection{STOP-SEND:}
 
 
-
+\subsection{Root Node}
 
 
 \section{MQTT infrastructure}
-MQTT stands for Message Queuing Telemetry Transport, and is a publish/subscribe protocol. It requires a MQTT broker as well as MQTT clients that can publish information to the broker, as topics, or subscribe to the broker for a specific topic, in order to be updated everytime there is new information on that topic.
+MQTT stands for Message Queuing Telemetry Transport, and is a publish/subscribe messaging protocol. It requires a MQTT broker as well as MQTT clients that can publish information to the broker, as topics, or subscribe to the broker for a specific topic, in order to be updated every time there is new information on that topic.
 
 \subsection{MQTT Broker}
-The broker is the central element of MQTT. It is where each MQTT client either subscribe to a topic, or publishes information under a specific topic. In this instance, we used Mosquitto, an open-source MQTT broker.\\
-
-In our case, the MQTT broker will be running on a regular laptop.
+The broker is the central element of MQTT. It is where each MQTT client either subscribe to a topic, or publishes information under a specific topic. In this instance, we used Mosquitto, an open-source MQTT broker that will be running on a regular laptop.
 
 
 \subsection{MQTT Publishers}
@@ -124,7 +122,7 @@ In this project, we have two distinct MQTT publishers. The first MQTT publisher 
 The second publisher is the \textbf{MQTT client} used for configuring the sensor network. We use this MQTT configuration client to send configuration commands to the sensor network, in place of using a direct command line interface on the Gateway machine.
 
 \subsection{MQTT Subscribers}
-The MQTT broker allows for clients to both publish data, or subscribe in order to be kept updated on data. In this project, we have two different MQTT subscribers : regular MQTT clients, and the Rime-MQTT Gateway.
+The MQTT broker allows for clients to both publish data, or subscribe in order to be kept updated on data. In this project, we have two different MQTT subscribers : regular MQTT clients, and the Rime-MQTT Gateway that will subscribe to the configuration topic.
 
 \subsection{Regular MQTT clients}
 For demonstration purpose, one or several clients will run on our machine, and subscribe to specific topics, to receive information from the sensor network. Once subscribed to the appropriate topic, each subscriber will receive periodical information from the network.
@@ -136,16 +134,15 @@ In order to implement the possibility of modifying the IoT network configuration
 \section{Rime-MQTT Gateway}
 The Rime-MQTT Gateway is a python program, that serves as an interface between the sensor network and the MQTT broker.\\
 
-On one side, it receives data from the root node of the sensor network and translates them into MQTT publish messages that it sends to the MQTT broker. On the other side, it subscribes to the MQTT broker for configurations messages that it then translate into a format that the root of the sensor node understands.\\
+On one side, it receives data from the root node of the sensor network and translates them into MQTT publish messages that it sends to the MQTT broker. On the other side, it subscribes to the MQTT broker for configurations messages that it then translate into a format that the root of the sensor node understands (see figure \ref{fig:communication1}).\\
+
 
 \subsection{Prevention of Meaningless Communication}
-Most IoT object are powered by battery and are therefore under strict energy requirements. It is of the utmost importance that the battery life be preserved as much as possible. As a consequence, we want to avoid sending data when no one is asking for it.\\
+Most IoT objects are powered by battery and are therefore under strict energy constraints. It is important for these devices to preserve battery life as much as possible. As a consequence, we want to avoid sending data when no one is asking for it.\\
 
-In order to do that, the Gateway subscribes to a MQTT topic that counts the number of people subscribed to the MQTT topics published by the sensor network (\$SYS/broker/subscriptions/count). When the number of subscribers change, the Gateway receives an update.\\
+In order to prevent that, the Gateway subscribes to a MQTT topic that counts the number of people subscribed to the MQTT topics published by the sensor network (\$SYS/broker/subscriptions/count). When the number of subscribers change, the Gateway receives an update.\\
 
 When no one is subscribed, the Gateway sends a message to the network, to tell the nodes that they need to stop sending data, therefore saving their battery life.
-
-The Gateway also subscribes to the  topic, in order to be warned when 
 
 \begin{figure}
   \includegraphics[width=\linewidth]{img/communication-2.jpg}
@@ -154,6 +151,22 @@ The Gateway also subscribes to the  topic, in order to be warned when
 \end{figure}
 
 \subsection{Sensor Network Configuration}
-One of the requirement of this project is the possibility to dynamically modify the configuration of the sensor network. The proposed method was to by directly interacting with 
+One of the requirement of this project is the possibility to dynamically modify the configuration of the sensor network. The proposed method was to by directly interacting with the Gateway via command line, but we opted for using the existing MQTT infrastructure to implement this functionality.
+
+\begin{comment}
+UPDATE_MODE:
+			periodic_mode = 0;
+			propagate(UPDATE_MODE);
+			break;
+		case PERIODIC_MODE:
+			periodic_mode = 1;
+			propagate(PERIODIC_MODE);
+			break;
+		case START_SEND:
+			has_subscribers = 1;
+			propagate(START_SEND);
+			break;
+		case STOP_SEND:
+\end{comment}
 \end{document}
 
