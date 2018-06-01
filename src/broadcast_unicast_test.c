@@ -11,12 +11,6 @@
 #include "dev/adxl345.h"
 #include "dev/battery-sensor.h"
 #include "dev/serial-line.h"
-static char periodic_mode = 1;
-static char has_subscribers = 0;
-static struct etimer et_temp;
-static struct etimer et_accel;
-static struct etimer et_battery;
-static process_event_t new_subscriber;
 
 #include <stdio.h>
 
@@ -27,24 +21,25 @@ static process_event_t new_subscriber;
 #define TAG_VADOR 4
 #define TAG_ACK_PARENT 5
 #define TAG_ROOT 6
+
 // #define TAG_ACK_ROOT 7 TODO Pas sur si nécessaire
+
+#define UPDATE_MODE 8
+#define PERIODIC_MODE 9
+#define START_SEND 10
+#define STOP_SEND 11
+
+
 
 #define TAG_TEMP 'T'
 #define TAG_BATTERY 'B'
 #define TAG_ACCEL 'Z'
 #define READ_INTERVAL (CLOCK_SECOND)
 
-
-
-/* This are the messages structures */
 struct node{
 	struct node *next; // we need it for our fathers and sons list
 	linkaddr_t addr; // parent address
 	uint8_t rank;  //parent rank
-};
-	
-struct simple_tag{
-	uint8_t tag;
 };
 
 /* Broadcast and unicast structures */
@@ -54,10 +49,17 @@ static struct unicast_conn unicast;
 /* Nodes variables */
 static uint8_t node_rank = 255;
 static struct node parent;
+static uint8_t simple_tag; // byte used to send simple tags (pings, configs, ...)
 static char has_parent = 0; // boolean for "has a parent"
 static char has_connection = 0; // boolean for "received ack from parent after ping"
 static char has_tried_connecting = 0; //  number of tries to reach parent
 static uint8_t buffer[8]; // Possible buffer for data_message not ackd
+static char periodic_mode = 1;
+static char has_subscribers = 0;
+static struct etimer et_temp;
+static struct etimer et_accel;
+static struct etimer et_battery;
+static process_event_t new_subscriber;
 
 LIST(lukes_list); // dynamic list of nodes (all lukes)
 LIST(vadors_list); // dynamic list of possible fathers
@@ -75,26 +77,39 @@ AUTOSTART_PROCESSES(&broadcast_process,&unicast_process,&temp_process,&accel_pro
 /* Function called when receiving a brodcast message*/
 static void broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from){
 	
-	struct simple_tag *msg_rcv;
+	//struct simple_tag *msg_rcv;
 	//struct info_message *msg_2_snd;
-	uint8_t msg_2_snd[4];
+	uint8_t msg_2_snd[6];
 
 	/*data received*/
-	msg_rcv = packetbuf_dataptr(); // pointer to data
+	simple_tag = *(uint8_t*) packetbuf_dataptr(); // pointer to data
+	
 	
 	printf("DAD REQUEST from %d.%d: '%d'\n", from->u8[0], from->u8[1], 
-msg_rcv->tag);
+simple_tag);
 	/*checks if the broadcast message is a Dis*/
-	if (msg_rcv->tag == TAG_DISCOVERY && has_parent){
+	if (simple_tag == TAG_DISCOVERY && has_parent){
 		/*data to send*/
 
 		msg_2_snd[0] = TAG_VADOR; // sending node's information (rank, addr)
 		msg_2_snd[1] = node_rank;
 		msg_2_snd[2] = linkaddr_node_addr.u8[0]; // TODO pas besoin info déjà présente
 		msg_2_snd[3] = linkaddr_node_addr.u8[1]; // TODO remove
+		msg_2_snd[4] = periodic_mode; // Config State
+		msg_2_snd[5] = has_subscribers; // Config State
 		packetbuf_copyfrom(msg_2_snd,sizeof(msg_2_snd));
 		unicast_send(&unicast, from);
 		printf("DAD(%d.%d) RESPONSE to possible son %d.%d: '%d'\n",linkaddr_node_addr.u8[0],linkaddr_node_addr.u8[1], from->u8[0], from->u8[1], msg_2_snd[0]);
+	}
+}
+
+static void propagate(uint8_t config_tag){ // TODO find the right arguments for this fct to work
+	if(list_head(lukes_list) != NULL){
+		struct node *i;
+		for(i = list_head(lukes_list); i != NULL; i = list_item_next(i)){
+			packetbuf_copyfrom(&config_tag,sizeof(uint8_t));
+			unicast_send(&unicast, &i->addr);
+		}
 	}
 }
 
@@ -107,7 +122,7 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 	 from->u8[0], from->u8[1],ptr_data[0]);
 
 	struct node *inc_node_info = malloc(sizeof(struct node)); // TODO vu qu'on l'utilise pas tt le temps faudrait il pas le créé que ds certaines conditions ?
-	struct simple_tag pong;
+	//struct simple_tag pong;
 
 	switch(ptr_data[0]) {
 
@@ -116,6 +131,8 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 			linkaddr_copy(&inc_node_info->addr,from);
 			inc_node_info->rank = ptr_data[1];
 			list_add(vadors_list,inc_node_info);
+			periodic_mode = ptr_data[4];
+			has_subscribers = ptr_data[5];
 			break;
 		case TAG_ACK_PARENT:
 			printf("Adding son to the list\n");
@@ -126,15 +143,16 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 		case TAG_INFO:
 			/* Ping from luke */
 			printf("Ping from the son\n");
-			pong.tag = TAG_ACK_INFO;
-			packetbuf_copyfrom(&pong,sizeof(struct simple_tag));
+			//pong.tag = TAG_ACK_INFO;
+			//packetbuf_copyfrom(&pong,sizeof(struct simple_tag));
+			simple_tag = TAG_ACK_INFO;
+			packetbuf_copyfrom(&simple_tag,sizeof(uint8_t));	
 			unicast_send(&unicast, from);
 			break;
 		case TAG_ACK_INFO:
 			/* Pong from parent */
 			printf("Pong from the parent\n");
 			has_tried_connecting = 0;
-			//has_connection = 1;
 			break;
 		case TAG_ROOT:
 			/* Data to send to root */
@@ -145,6 +163,25 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
 			}else{
 			// TODO ADD to BUFFER and try to send when parent found
 			}
+		case UPDATE_MODE:
+			periodic_mode = 0;
+			propagate(UPDATE_MODE);
+			break;
+                case PERIODIC_MODE:
+			periodic_mode = 1;
+			propagate(PERIODIC_MODE);
+			break;
+                case START_SEND:
+			has_subscribers = 1;
+			process_post(&battery_process, new_subscriber, NULL);
+			process_post(&accel_process, new_subscriber, NULL);
+			process_post(&temp_process, new_subscriber, NULL);
+			propagate(START_SEND);
+			break;
+                case STOP_SEND:
+			has_subscribers = 0;
+			propagate(STOP_SEND);
+			break;
 	}
 	
 }
@@ -159,9 +196,9 @@ static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
 
 PROCESS_THREAD(broadcast_process, ev, data){
 	static struct etimer et;
-	struct simple_tag dis;
+	//struct simple_tag dis;
 
-	dis.tag = TAG_DISCOVERY; // Looking for parent
+	simple_tag = TAG_DISCOVERY; // Looking for parent
 
 	PROCESS_EXITHANDLER(broadcast_close(&broadcast);)
 
@@ -221,9 +258,9 @@ PROCESS_THREAD(broadcast_process, ev, data){
 		
 		if(has_parent == 0){// || has_connection == 0){ // no parent or not connected anymore then rebroadcast
 			printf("No parent or no connection\n");
-			packetbuf_copyfrom(&dis,sizeof(struct simple_tag));
+			packetbuf_copyfrom(&simple_tag,sizeof(uint8_t));
 			broadcast_send(&broadcast);
-			printf("Looking for a father %d\n",dis.tag);
+			printf("Looking for a father %d\n",simple_tag);
 		}
 
 		PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
@@ -251,7 +288,8 @@ PROCESS_THREAD(unicast_process, ev, data){
 
 	while(1) {
 		static struct etimer et;
-		struct simple_tag ping;
+		//struct simple_tag ping;
+		
 
 		etimer_set(&et, 100*CLOCK_SECOND);
 
@@ -259,8 +297,8 @@ PROCESS_THREAD(unicast_process, ev, data){
 		
 		if(has_parent && has_tried_connecting < 3){
 			printf("TRYING TO PING DADDY\n");
-			ping.tag = TAG_INFO;
-			packetbuf_copyfrom(&ping,sizeof(struct simple_tag));
+			simple_tag = TAG_INFO;
+			packetbuf_copyfrom(&simple_tag,sizeof(uint8_t));
 			unicast_send(&unicast, &parent.addr);
 			has_tried_connecting++;
 		}else if(has_tried_connecting >= 3){
