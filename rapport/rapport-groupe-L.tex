@@ -32,7 +32,7 @@ The way to propagate information is by communicating with neighbouring devices, 
 
 Another part of this system is the MQTT infrastructure. MQTT (Message Queuing Telemetry Transport) is a publish/subscribe messaging protocol that allows publishers to publish data to a MQTT broker, while clients can subscribe to that same broker, to receive specific information from the publishers.\\
 
-The first goal of this project is to implement a custom routing protocol, similar to RPL,  that will allow the creation of a network of IoT devices called  Destination Oriented Directed Acyclic Graph, or DODAG for short. Information should be able to travel from any node of the network, to the root node, which acts as a gateway towards the outside world. \\
+The first goal of this project is to implement a custom routing protocol, similar to RPL, that will allow the creation of a network of IoT devices. Information should be able to travel from any node of the network to the root node which acts as a gateway towards the outside world. \\
 
 The second goal is to create an MQTT infrastructure, that allow clients to subscribe to a MQTT broker, and publishers to publish data to the broker.\\
 
@@ -47,7 +47,7 @@ Lastly, the sensor data
 The scope of this project covers three separate part (see figure \ref{fig:architecture1}):
 \begin{itemize}
 \item{An IoT sensor network, where devices organize themselves, and communicate with each other by using a custom routing protocol similar to RPL.}
-\item{A MQTT publish/subscribe infrastructure composed of a MQTT broker and several MQTT client that can either publish data and subscribe to topics to receive data.}
+\item{An MQTT publish/subscribe infrastructure composed of an MQTT broker and several MQTT clients that can either publish data or/and subscribe to topics to receive data.}
 \item{A Rime-MQTT Gateway which interfaces the sensor network with the MQTT infrastructure in order for the IoT network and MQTT infrastructure to talk to each other in a transparent manner.}
 \end{itemize}
 
@@ -56,48 +56,45 @@ The scope of this project covers three separate part (see figure \ref{fig:archit
   \caption{An overview of the system.}
   \label{fig:architecture1}
 \end{figure}
-\section{DODAG and Routing Protocol}
-One of the objectives of this project is the implementation of a routing protocol, similar to RPL (Routing Protocol for Low-Power and Lossy Networks). A routing protocol is needed in order create a Destination Oriented Directed Acyclic Graph (DODAG), and have the information propagate properly from any individual node to the root node of the network.\\
-
-Any given node that isn't part of the network should have the posibility to become one, and start publishing information. Any node of the network should also be able to disappear without compromising the integrity of the network as long as the node is not a critical junction of two parts of the network graph.
+\section{Network Structure and Routing Protocol}
+One of the objectives of this project is the implementation of a routing protocol, similar to RPL but simplified where nodes can only have 1 parent.\\
+This will create a tree based structure.\\
+We have to prepare our protocols for a list of scenarios and make sure our implementation is capable to handle them.
 
 \subsection{Joining a graph}
 \label{sec: joining-graph}
-When an IoT device is started, it needs to find a network to join. It will therefore use a \textit{Discovery message} to broadcast its existence, ask around for some information about the DODAG, and wait for the response. This \textit{Discovery message} will be send periodically based on a timer.\\
-
-When a node that is already a member of the DODAG receives this broadcasted message, it replies with a unicast \textit{Parent Message}, advertising itself as a possible parent. When the node that is trying to join the network receives a \textit{Parent Message}, it saves the address of the parent and sends a unicast \textit{Parent-ACK message} to the parent, to confirm their child-parent relationship. The parent then adds the child to the list of its children.\\
-
-When getting a new parent, the child node also inherits the configuration of the parent, and is therefore up-to-date with the rest of the DODAG, regarding configuration.
+When a node tries to join a graph it will broadcast a \textit{Discovery message}to inform sourrounding nodes of its intent. It then waits for a certain time for a response. The nodes receiving the broadcast and already having a parent will unicast back to the new node with a \textit{Parent Message} and their rank. The new node will add the different parents and after the timer is finished, go through the "Vador propositions" and choose the one with the smallest rank. It will sends a unicast \textit{Parent-ACK Message} to the parent, to confirm their child-parent relationship. The parent then adds the child to the list of its children.\\
+If it doesn't receive any response, it loops on the discovery broadcast.\\
+When getting a new parent, the child node also inherits the configuration(periodic or update mode and activ) of the parent and is therefore up-to-date with the rest of the tree.
 
 \subsection{Leaving a Graph}
-Nodes that are in a parent-child relationship maintain an awareness to each other. The child periodically sends an \textit{Information Messages} to its parent. The parent then responds with an \textit{Information-Acknowledgement Message}.\\
-
-If the child hasn't heard from its parent before a specific timer runs out, it will send three more \textit{Information Messages}. If the three messages don't receive a response, the parent is considered missing, and the child start looking for a new parent, by broadcasting a \textit{Discovery Message} (see section \ref{sec: joining-graph} about joining a graph).
+Nodes that are in a parent-child relationship maintain an awareness to each other. The child periodically pings its parent with an \textit{Information Message}. The parent then pongs back with \textit{Information-Acknowledgement Message}.\\
+If no ACK is sent back, the child will try to ping its parent a total of three times with timers in between. After that delay, the parent is considered missing and the child starts looking for a new parent by restarting the discovery loop process. (see section \ref{sec: joining-graph}).
 
 \subsection{Sending Sensor Data}
-Periodically, each node uses a \textit{ROOT message} to send data to the root node of the DODAG, which will then forward it to the Gateway, where it will be translated into a MQTT message that will be sent to the MQTT broker. Once it reaches the MQTT broker, the message is forwarded to all the MQTT client that have subscribed to the specific topic relative to that message.
+Periodically, each node uses a \textit{ROOT message} to forward data to the root node of the Tree which will then forward it to the Gateway where it will be translated into an MQTT message that will be sent to the MQTT broker. Once it reaches the MQTT broker, the message is forwarded to all the MQTT client that have subscribed to the specific topic relative to that message.
+The forwarding of the sensor data to the root works because by forwarding the sensor data to the parent of any node it will reach at some point the root.
 
 \subsection{Sending Configuration Requests}
-We can send configuration requests through a MQTT publisher, that publishes on a "/config" topic, to which the Rime-MQTT Gateway is subscribed. The Gateway then translate that MQTT configuration message into a message that the sensor network can understand, by using TODO
-
+We can send configuration requests through a MQTT publisher, that publishes on a "/config" topic, to which the Rime-MQTT Gateway is subscribed. The Gateway then translate that MQTT configuration message into a message that the sensor network can understand which then is sent to the root that will propage the new configuration by sending unicast messages to each nodes sons recursively.
 
 \subsection{Summary of Message Types}
 The following section describes all the message types that are used by the IoT devices in order to organize themselves and communicate.
 
 \subsubsection{TAG-DISCOVERY: Discovery Message}
-When a node has doesn't belong to the network, it will try sending a broadcast request for potential parent nodes to manifest themselves. This is called a \textit{Discovery message}.
+When a node doesn't belong to a network, it will broadcast request for potential parent nodes to manifest themselves. This is called a \textit{Discovery message}.
 
 \subsubsection{TAG-VADOR: Parent Message}
-A \textit{Parent Message} is sent by a member of the network after receiving a Discovery message. This message advertises the parent's address as well as rank within the network.
+A \textit{Parent Message} is sent by a member of the network after receiving a Discovery message. This message advertises the parent's address as well as its rank within the network.
 
 \subsubsection{TAG-ACK-PARENT: Acknowledgement of Parent message}
-When a node which isn't part of the network receives a \textit{Parent message}, it can decide to set the sender of the \textit{Parent message} as its own parent.it then sends a unicast \textit{ACK-Parent message} to the parent, to inform it that it has a new child. After sending this \textit{ACK-Parent message}, the child node officially becomes part of the network.
+After receiving one or more Parent Messages and chosing a parent, the new node will then send an ACK to its new parent. This will allow the parent to add him as a child for future configuration updates.
 
 \subsubsection{TAG-INFO: Information Message}
-An \textit{information Message} is a message sent by a child to its parent.
+An \textit{information Message} is a ping from a child to its parent to assess the state of their connection.
 
 \subsubsection{TAG-ACK-INFO: Acknowledgment of Information message}
-This message is a unicast message sent by a parent after receiving an \textit{Information Message} from one of its children. This serves as a confirmation that the message has been properly received.
+This is a pong back to the child's ping. This serves as a confirmation that the message has been properly received.
 
 
 \subsubsection{TAG-ROOT: Messages destined to the root node}
