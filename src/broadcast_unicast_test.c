@@ -85,16 +85,14 @@ static void broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from){
     simple_tag = *(uint8_t*) packetbuf_dataptr(); // pointer to data
 
 
-    printf("DAD REQUEST from %d.%d: '%d'\n", from->u8[0], from->u8[1], 
-            simple_tag);
+    printf("DAD REQUEST from %d.%d: '%d'\n", from->u8[0], from->u8[1], simple_tag);
     /*checks if the broadcast message is a Dis*/
     if (simple_tag == TAG_DISCOVERY && has_parent){
-        /*data to send*/
 
         msg_2_snd[0] = TAG_VADOR; // sending node's information (rank, addr)
         msg_2_snd[1] = node_rank;
-        msg_2_snd[2] = linkaddr_node_addr.u8[0]; // TODO pas besoin info déjà présente
-        msg_2_snd[3] = linkaddr_node_addr.u8[1]; // TODO remove
+        msg_2_snd[2] = linkaddr_node_addr.u8[0]; 
+        msg_2_snd[3] = linkaddr_node_addr.u8[1]; 
         msg_2_snd[4] = periodic_mode; // Config State
         msg_2_snd[5] = has_subscribers; // Config State
         packetbuf_copyfrom(msg_2_snd,sizeof(msg_2_snd));
@@ -103,7 +101,7 @@ static void broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from){
     }
 }
 
-static void propagate(uint8_t config_tag){ // TODO find the right arguments for this fct to work
+static void propagate(uint8_t config_tag){
     if(list_head(lukes_list) != NULL){
         struct node *i;
         for(i = list_head(lukes_list); i != NULL; i = list_item_next(i)){
@@ -121,8 +119,7 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
     printf("unicast message received from %d.%d with this beautiful tag: %d\n",
             from->u8[0], from->u8[1],ptr_data[0]);
 
-    struct node *inc_node_info = malloc(sizeof(struct node)); // TODO vu qu'on l'utilise pas tt le temps faudrait il pas le créé que ds certaines conditions ?
-    //struct simple_tag pong;
+    struct node *inc_node_info = malloc(sizeof(struct node));
 
     switch(ptr_data[0]) {
 
@@ -143,8 +140,6 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
         case TAG_INFO:
             /* Ping from luke */
             printf("Ping from the son\n");
-            //pong.tag = TAG_ACK_INFO;
-            //packetbuf_copyfrom(&pong,sizeof(struct simple_tag));
             simple_tag = TAG_ACK_INFO;
             packetbuf_copyfrom(&simple_tag,sizeof(uint8_t));	
             unicast_send(&unicast, from);
@@ -160,9 +155,6 @@ static void recv_uc(struct unicast_conn *c, const linkaddr_t *from){
             if(has_parent){
                 packetbuf_copyfrom(ptr_data,packetbuf_datalen());
                 unicast_send(&unicast, &parent.addr);
-            }else{
-                // TODO ADD to BUFFER and try to send when parent found
-            }
         case UPDATE_MODE:
             periodic_mode = 0;
             propagate(UPDATE_MODE);
@@ -196,7 +188,6 @@ static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
 
 PROCESS_THREAD(broadcast_process, ev, data){
     static struct etimer et_broadcast;
-    //struct simple_tag dis;
 
     simple_tag = TAG_DISCOVERY; // Looking for parent
 
@@ -239,7 +230,6 @@ PROCESS_THREAD(broadcast_process, ev, data){
             printf("My rank after daddy check: %d\n", node_rank);
 
             has_parent = 1;
-            //has_connection = 1;
 
 
             /* Send ACK to father */
@@ -251,12 +241,12 @@ PROCESS_THREAD(broadcast_process, ev, data){
             msg_2_snd[3] = linkaddr_node_addr.u8[1];
             packetbuf_copyfrom(msg_2_snd,sizeof(msg_2_snd));
             unicast_send(&unicast, &parent.addr);
-            printf("Sending ACK to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]); //  problem with addresses
+            printf("Sending ACK to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]); 
         }
 
 
 
-        if(has_parent == 0){// || has_connection == 0) // no parent or not connected anymore then rebroadcast
+        if(has_parent == 0){
             printf("No parent or no connection\n");
             packetbuf_copyfrom(&simple_tag,sizeof(uint8_t));
             broadcast_send(&broadcast);
@@ -288,7 +278,6 @@ PROCESS_THREAD(unicast_process, ev, data){
     unicast_open(&unicast, 146, &unicast_callbacks);
 
     while(1) {
-        //struct simple_tag ping;
 
 
         etimer_set(&et_unicast, 100*CLOCK_SECOND);
@@ -305,7 +294,6 @@ PROCESS_THREAD(unicast_process, ev, data){
             /* New node situation */
             printf("RESET, PARENT LOST\n");
             has_tried_connecting = 0; 
-            //has_connection = 0; 
             has_parent = 0;
             node_rank = 255;
         }		
@@ -344,7 +332,7 @@ PROCESS_THREAD(battery_process, ev, data) {
         printf("%c %d\n", TAG_BATTERY, battery);
         packetbuf_copyfrom(msg,sizeof(msg));
         unicast_send(&unicast, &parent.addr);
-        printf("Sending battery data to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]); //  problem with addresses
+        printf("Sending battery data to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]);
     }
     PROCESS_END();
 }
@@ -388,7 +376,7 @@ PROCESS_THREAD(accel_process, ev, data) {
         printf("%c %d %d %d\n", TAG_ACCEL, x, y, z);
         packetbuf_copyfrom(msg,sizeof(msg));
         unicast_send(&unicast, &parent.addr);
-        printf("Sending accelerometer data to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]); //  problem with addresses
+        printf("Sending accelerometer data to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]);
     }
     PROCESS_END();
 }
@@ -424,7 +412,7 @@ PROCESS_THREAD(temp_process, ev, data) {
         printf("%c %d\n", TAG_TEMP, temp);
         packetbuf_copyfrom(msg,sizeof(msg));
         unicast_send(&unicast, &parent.addr);
-        printf("Sending temperature data to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]); //  problem with addresses
+        printf("Sending temperature data to parent %d.%d\n",parent.addr.u8[0],parent.addr.u8[1]);
     }
     PROCESS_END();
 }

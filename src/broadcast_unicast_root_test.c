@@ -3,7 +3,7 @@
 #include "lib/sensors.h"
 #include "dev/serial-line.h"
 
-#include "net/rime/rime.h" // TODO probably needed
+#include "net/rime/rime.h"
 #include "lib/list.h"
 #include "random.h"
 
@@ -90,7 +90,6 @@ float floor(float x) {
 static void broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from){
 
     struct simple_tag *msg_rcv;
-    //struct info_message *msg_2_snd;
     uint8_t msg_2_snd[4];
 
     /*data received*/
@@ -172,7 +171,7 @@ PROCESS_THREAD(ask_config, ev, data){
 
 /*---------------------------------------------------------------------------*/
 
-static void propagate(uint8_t config_tag){ // TODO find the right arguments for this fct to work
+static void propagate(uint8_t config_tag){ 
     if(list_head(lukes_list) != NULL){
         struct node *i;
         for(i = list_head(lukes_list); i != NULL; i = list_item_next(i)){
