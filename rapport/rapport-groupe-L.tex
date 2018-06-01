@@ -73,39 +73,37 @@ Nodes that are in a parent-child relationship maintain an awareness to each othe
 If the child hasn't heard from its parent before a specific timer runs out, it will send three more \textit{Information Messages}. If the three messages don't receive a response, the parent is considered missing, and the child start looking for a new parent, by broadcasting a \textit{Discovery Message} (see section \ref{sec: joining-graph} about joining a graph).
 
 \subsection{Sending Sensor Data}
-Periodically, each node uses a \textit{ROOT message} to send data to the root node of the DODAG, , which will then forward it to the Gateway, where it will be translated into a MQTT message that will be sent to the MQTT broker. Once it reaches the MQTT broker, the message is forwarded to all the MQTT client that have subscribed to the specific topic relative to that message.
+Periodically, each node uses a \textit{ROOT message} to send data to the root node of the DODAG, which will then forward it to the Gateway, where it will be translated into a MQTT message that will be sent to the MQTT broker. Once it reaches the MQTT broker, the message is forwarded to all the MQTT client that have subscribed to the specific topic relative to that message.
 
 \subsection{Sending Configuration Requests}
-We can send configuration requests through a MQTT publisher, that publishes on a "/config" topic, to which the Rime-MQTT Gateway is subscribed. The Gateway then translate that MQTT configuration message into a message that the sensor network can understand, by using
+We can send configuration requests through a MQTT publisher, that publishes on a "/config" topic, to which the Rime-MQTT Gateway is subscribed. The Gateway then translate that MQTT configuration message into a message that the sensor network can understand, by using TODO
 
-
-\subsection{Packet Definitions}
 
 \subsection{Summary of Message Types}
-\subsubsection{Discovery Message: TAG-DISCOVERY}
+\subsubsection{TAG-DISCOVERY: Discovery Message}
 When a node has doesn't belong to the network, it will try sending a broadcast request for potential parent nodes to manifest themselves. This is called a \textit{Discovery message}.
 
-\subsubsection{Parent Message: TAG-VADOR}
+\subsubsection{TAG-VADOR: Parent Message}
 A \textit{Parent Message} is sent by a member of the network after receiving a Discovery message. This message advertises the parent's address as well as rank within the network.
 
-\subsubsection{ACK-Parent: TAG-ACK-PARENT}
+\subsubsection{TAG-ACK-PARENT: Acknowledgement of Parent message}
 When a node which isn't part of the network receives a \textit{Parent message}, it can decide to set the sender of the \textit{Parent message} as its own parent.it then sends a unicast \textit{ACK-Parent message} to the parent, to inform it that it has a new child. After sending this \textit{ACK-Parent message}, the child node officially becomes part of the network.
 
-\subsubsection{Information Message: TAG-INFO}
+\subsubsection{TAG-INFO: Information Message}
 An \textit{information Message} is a message sent by a child to its parent.
 
-\subsubsection{ACK-Info Message: TAG-ACK-INFO}
+\subsubsection{TAG-ACK-INFO: Acknowledgment of Information message}
 This message is a unicast message sent by a parent after receiving an \textit{Information Message} from one of its children. This serves as a confirmation that the message has been properly received.
 
 
-\subsubsection{Root Message: TAG-ROOT}
+\subsubsection{TAG-ROOT: Messages destined to the root node}
 Periodically, each node sends takes information from it's sensors and sends it to its parent. To do this, an \textit{Information message} is used.
 
 
-\subsubsection{UPDATE-MODE}
-\subsubsection{PERIODIC-MODE}
-\subsubsection{START-SEND}
-\subsubsection{STOP-SEND}
+\subsubsection{UPDATE-MODE: }
+\subsubsection{PERIODIC-MODE: }
+\subsubsection{START-SEND:}
+\subsubsection{STOP-SEND:}
 
 
 
