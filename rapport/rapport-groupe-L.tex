@@ -151,22 +151,20 @@ When no one is subscribed, the Gateway sends a message to the network, to tell t
 \end{figure}
 
 \subsection{Sensor Network Configuration}
-One of the requirement of this project is the possibility to dynamically modify the configuration of the sensor network. The proposed method was to by directly interacting with the Gateway via command line, but we opted for using the existing MQTT infrastructure to implement this functionality.
+One of the requirement of this project is the possibility to dynamically modify the configuration of the sensor network. The proposed method was to by directly interacting with the Gateway via command line, but we opted for using the existing MQTT infrastructure to implement this functionality.\\
 
-\begin{comment}
-UPDATE_MODE:
-			periodic_mode = 0;
-			propagate(UPDATE_MODE);
-			break;
-		case PERIODIC_MODE:
-			periodic_mode = 1;
-			propagate(PERIODIC_MODE);
-			break;
-		case START_SEND:
-			has_subscribers = 1;
-			propagate(START_SEND);
-			break;
-		case STOP_SEND:
-\end{comment}
+The Gateway is a subscriber for the "/config" topic, which allows it to receive configuration commands from the MQTT client that publishes configuration commands.\\
+
+Once the MQTT message reaches the Gateway, it needs to be translated before sending it to the root node of the sensor network, after which the command will be propagated to each node.\\
+
+Four possible commands can be sent to the sensor network :
+\begin{itemize}
+\item{UPDATE-MODE}
+\item{PERIODIC-MODE}
+\item{START-SEND}
+\item{STOP-SEND}
+\end{itemize}
+
+
 \end{document}
 
